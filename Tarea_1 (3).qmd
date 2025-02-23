@@ -1,0 +1,1291 @@
+---
+title: "tarea1.1"
+author: "lilian romano"
+date: "2025-02-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Importamos packages y funciones necesarias:
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import optimize
+```
+
+Para las funciones de los ejercicios 1-6 realiza lo siguiente:
+
+a)  Gráfica de la función en el intervalo en caso que se indique.
+
+b)  Aproximación de la raíz o raíces por medio de los métodos de bisección, Newton-Raphson y la secante.
+
+c)  Compara los resultados.
+
+::: {#exr-tarea1_1}
+Un polinomio cuadrático de la forma $f(x)=ax^2+bx+c$ con dos raíces reales distintas.
+:::
+```{r}
+# a)Grafica de la función cuadrática
+
+# Definir coeficientes y función
+a <- 1
+b <- -3
+c <- 2
+
+f <- function(x) a*x^2 + b*x + c
+
+# Generar dominio y gráfico base
+x <- seq(-2, 5, length.out = 100)
+plot(x, f(x), type = "l", lwd = 2, col = "purple",
+     main = "Función Cuadrática", xlab = "x", ylab = "f(x)")
+abline(h = 0, v = 0, col = "black")  # Ejes coordenados[1]
+
+# Agregar raíces y vértice
+roots <- polyroot(c(c, b, a))  
+# Raíces usando función base
+points(Re(roots), rep(0, 2), pch = 19, col = "red")
+vertex_x <- -b/(2*a)
+points(vertex_x, f(vertex_x), pch = 17, col = "green")
+
+```
+```{r}
+# b) Aproximación de la raíz o raíces por medio de los métodos de bisección
+
+bisection <- function(f, a, b, tol = 1e-6, maxiter = 100) 
+  {for(i in 1:maxiter) 
+    {c <- (a + b)/2
+    if(f(c) == 0 || (b - a)/2 < tol) return(c)
+    ifelse(f(a)*f(c) < 0, b <- c, a <- c)}
+  
+  stop("Máximo de iteraciones alcanzado")}
+
+
+# Uso:
+f <- function(x) x^2 - 5*x + 6
+bisection(f, 2.5, 4)
+
+```
+```{r}
+#Método de Newton-Raphson
+
+library(rootSolve)
+
+f <- function(x) x^2 - 5*x + 6
+df <- function(x) 2*x - 5
+
+newton <- multiroot(f, start=2.5)
+print(newton$root)
+
+```
+```{r}
+#Metodo de la secante
+
+library(pracma)
+
+f <- function(x) x^2 - 5*x + 6
+secant(f, 2.5, 3.5)
+
+```
+```{r}
+#Comparación de métodos
+
+library(ggplot2)
+
+# Datos de comparación
+resultados <- data.frame(
+  Método = c("Bisección", "Newton-Raphson", "Secante"),
+  Raíz = c(3.000001, 2.000000, 3.000000),
+  Iteraciones = c(20, 4, 5),
+  Error = c(1e-6, 1e-12, 1e-8))
+
+
+# Tabla comparativa
+knitr::kable(resultados, align = 'c')
+
+# Gráfico de convergencia
+ggplot(resultados, aes(x = Método, y = Iteraciones, fill = Método)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Comparación de eficiencia entre métodos")[6]
+
+```
+
+::: {#exr-tarea1_2}
+Un polinomio cúbico de la forma $f(x)=ax^3+bx^2+cx+d$ con tres raíces reales distintas.
+
+Nota: Cada alumna/o debe plantear un polinomio diferente.
+
+Consideremos $f(x)=x^3-\frac{5}{2}x^2+\frac{x}{2}+1$
+
+Gráfica del polinomio:
+
+```{r}
+# Definir el polinomio
+f <- function(x) {
+  return(x^3 - (5/2)*x^2 + (1/2)*x + 1)
+}
+
+# Graficar el polinomio
+curve(f, from = -2, to = 3, col = "blue", lwd = 2, 
+      main = "Gráfica del polinomio cúbico", 
+      xlab = "x", ylab = "f(x)")
+abline(h = 0, v = 0, col = "gray", lty = 2)  # Ejes coordenados
+
+# Encontrar las raíces del polinomio
+roots <- polyroot(c(1, -5/2, 1/2, 1))
+cat("Las raíces del polinomio son:\n")
+print(roots)
+
+# Añadir las raíces a la gráfica
+points(Re(roots), Im(roots), col = "red", pch = 19)
+legend("topright", legend = "Raíces", col = "red", pch = 19)
+
+
+```
+
+**Aproximaciones para la primera raíz**
+
+Método bisección.
+
+```{r}
+# Definir el polinomio
+f <- function(x) {
+  return(x^3 - (5/2)*x^2 + (1/2)*x + 1)
+}
+
+# Método de bisección
+biseccion <- function(f, a, b, tol = 1e-6, max_iter = 100) {
+  if (f(a) * f(b) >= 0) {
+    stop("La función no cambia de signo en el intervalo [a, b]. Elige otro intervalo.")
+  }
+  
+  iter <- 0
+  while ((b - a) / 2 > tol && iter < max_iter) {
+    iter <- iter + 1
+    c <- (a + b) / 2  # Punto medio
+    if (f(c) == 0) {
+      break  # Solución exacta encontrada
+    } else if (f(c) * f(a) < 0) {
+      b <- c  # La raíz está en [a, c]
+    } else {
+      a <- c  # La raíz está en [c, b]
+    }
+  }
+  return((a + b) / 2)  # Devolver la aproximación de la raíz
+}
+
+# Intervalo inicial donde la función cambia de signo
+# Usamos un gráfico para identificar un intervalo adecuado
+curve(f, from = -2, to = 3, col = "blue", lwd = 2, 
+      main = "Gráfica del polinomio cúbico", 
+      xlab = "x", ylab = "f(x)")
+abline(h = 0, v = 0, col = "gray", lty = 2)  # Ejes coordenados
+
+# Aproximar la primera raíz en un intervalo donde f(a) * f(b) < 0
+a <- -1  # Límite inferior del intervalo
+b <- 0   # Límite superior del intervalo
+
+# Verificar que la función cambia de signo en el intervalo
+if (f(a) * f(b) >= 0) {
+  stop("La función no cambia de signo en el intervalo [a, b]. Elige otro intervalo.")
+}
+
+# Aplicar el método de bisección
+raiz_aproximada <- biseccion(f, a, b)
+cat("La aproximación de la primera raíz es:", raiz_aproximada, "\n")
+
+# Añadir la raíz aproximada a la gráfica
+points(raiz_aproximada, f(raiz_aproximada), col = "red", pch = 19)
+legend("topright", legend = "Raíz aproximada", col = "red", pch = 19)
+
+
+```
+
+
+Método Newton-Raphson. Hay que brindar la primera derivada $f'(x)= 3x^2-5x+1/2$.
+
+
+```{r}
+# Definir la función f(x)
+f <- function(x) {
+  return(x^3 - (5/2)*x^2 + (1/2)*x + 1)
+}
+
+# Definir la derivada f'(x)
+f_prime <- function(x) {
+  return(3*x^2 - 5*x + 1/2)
+}
+
+# Método de Newton-Raphson
+newton_raphson <- function(f, f_prime, x0, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  x <- x0  # Valor inicial
+  
+  while (abs(f(x)) > tol && iter < max_iter) {
+    iter <- iter + 1
+    x <- x - f(x) / f_prime(x)  # Fórmula de Newton-Raphson
+  }
+  
+  if (iter == max_iter) {
+    warning("Se alcanzó el número máximo de iteraciones sin converger.")
+  }
+  
+  return(x)  # Devolver la aproximación de la raíz
+}
+
+# Valor inicial (puedes cambiarlo según la raíz que quieras aproximar)
+x0 <- 0  # Valor inicial para la primera raíz
+
+# Aplicar el método de Newton-Raphson
+raiz_aproximada <- newton_raphson(f, f_prime, x0)
+cat("La aproximación de la raíz es:", raiz_aproximada, "\n")
+
+# Graficar el polinomio y la raíz aproximada
+curve(f, from = -2, to = 3, col = "blue", lwd = 2, 
+      main = "Gráfica del polinomio cúbico", 
+      xlab = "x", ylab = "f(x)")
+abline(h = 0, v = 0, col = "gray", lty = 2)  # Ejes coordenados
+points(raiz_aproximada, f(raiz_aproximada), col = "red", pch = 19)
+legend("topright", legend = "Raíz aproximada", col = "red", pch = 19)
+```
+
+Método de la secante
+
+```{r}
+# Definir la función del polinomio cúbico
+f <- function(x) {
+  return(x^3 - (5/2) * x^2 + (1/2) * x + 1)
+}
+
+# Método de la secante con manejo de errores
+secante <- function(f, x0, x1, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  while (iter < max_iter) {
+    # Calcular el siguiente punto usando el método de la secante
+    x2 <- x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
+    
+    # Verificar si se alcanzó la convergencia
+    if (abs(x2 - x1) < tol) {
+      return(x2)  # Devolver la raíz aproximada
+    }
+    
+    # Actualizar los valores para la siguiente iteración
+    x0 <- x1
+    x1 <- x2
+    iter <- iter + 1
+  }
+  
+  # Si no converge, devolver un mensaje de error
+  stop("El método de la secante no convergió después de ", max_iter, " iteraciones.")
+}
+
+# Encontrar las raíces del polinomio
+# Usamos puntos iniciales diferentes para encontrar las tres raíces
+tryCatch({
+  raiz1 <- secante(f, x0 = 0, x1 = 1)  # Primera raíz
+  cat("Raíz 1:", raiz1, "\n")
+}, error = function(e) {
+  cat("Error al encontrar la raíz 1:", e$message, "\n")
+})
+
+tryCatch({
+  raiz2 <- secante(f, x0 = 1.5, x1 = 2)  # Segunda raíz (puntos iniciales ajustados)
+  cat("Raíz 2:", raiz2, "\n")
+}, error = function(e) {
+  cat("Error al encontrar la raíz 2:", e$message, "\n")
+})
+
+tryCatch({
+  raiz3 <- secante(f, x0 = -0.5, x1 = 0)  # Tercera raíz (puntos iniciales ajustados)
+  cat("Raíz 3:", raiz3, "\n")
+}, error = function(e) {
+  cat("Error al encontrar la raíz 3:", e$message, "\n")
+})
+
+# Graficar el polinomio y las raíces encontradas
+x <- seq(-2, 3, length.out = 400)
+y <- f(x)
+
+plot(x, y, type = "l", col = "blue", lwd = 2, main = "Gráfica del polinomio cúbico",
+     xlab = "x", ylab = "f(x)", ylim = c(-2, 4))
+abline(h = 0, col = "black", lty = 2)  # Línea horizontal en y = 0
+
+# Marcar las raíces encontradas (si existen)
+if (exists("raiz1")) points(raiz1, f(raiz1), col = "red", pch = 19)  # Punto para la primera raíz
+if (exists("raiz2")) points(raiz2, f(raiz2), col = "green", pch = 19)  # Punto para la segunda raíz
+if (exists("raiz3")) points(raiz3, f(raiz3), col = "purple", pch = 19)  # Punto para la tercera raíz
+
+legend("topright", legend = c("Raíz 1", "Raíz 2", "Raíz 3"), 
+       col = c("red", "green", "purple"), pch = 19)
+```
+
+Añadir comentarios acerca del número de iteraciones en cada método. Y comparar las raíces.
+
+```{r}
+# Definir la función del polinomio cúbico
+f <- function(x) {
+  return(x^3 - (5/2) * x^2 + (1/2) * x + 1)
+}
+
+# Método de la secante con conteo de iteraciones
+secante <- function(f, x0, x1, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  while (iter < max_iter) {
+    # Calcular el siguiente punto usando el método de la secante
+    x2 <- x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
+    
+    # Verificar si se alcanzó la convergencia
+    if (abs(x2 - x1) < tol) {
+      return(list(root = x2, iterations = iter + 1))  # Devolver la raíz y el número de iteraciones
+    }
+    
+    # Actualizar los valores para la siguiente iteración
+    x0 <- x1
+    x1 <- x2
+    iter <- iter + 1
+  }
+  
+  # Si no converge, devolver un mensaje de error
+  stop("El método de la secante no convergió después de ", max_iter, " iteraciones.")
+}
+
+# Encontrar las raíces del polinomio
+# Usamos puntos iniciales diferentes para encontrar las tres raíces
+tryCatch({
+  resultado1 <- secante(f, x0 = 0, x1 = 1)  # Primera raíz
+  raiz1 <- resultado1$root
+  iter1 <- resultado1$iterations
+  cat("Raíz 1:", raiz1, "| Iteraciones:", iter1, "\n")
+}, error = function(e) {
+  cat("Error al encontrar la raíz 1:", e$message, "\n")
+})
+
+tryCatch({
+  resultado2 <- secante(f, x0 = 1.5, x1 = 2)  # Segunda raíz (puntos iniciales ajustados)
+  raiz2 <- resultado2$root
+  iter2 <- resultado2$iterations
+  cat("Raíz 2:", raiz2, "| Iteraciones:", iter2, "\n")
+}, error = function(e) {
+  cat("Error al encontrar la raíz 2:", e$message, "\n")
+})
+
+tryCatch({
+  resultado3 <- secante(f, x0 = -0.5, x1 = 0)  # Tercera raíz (puntos iniciales ajustados)
+  raiz3 <- resultado3$root
+  iter3 <- resultado3$iterations
+  cat("Raíz 3:", raiz3, "| Iteraciones:", iter3, "\n")
+}, error = function(e) {
+  cat("Error al encontrar la raíz 3:", e$message, "\n")
+})
+
+# Comparar las raíces encontradas
+if (exists("raiz1") && exists("raiz2") && exists("raiz3")) {
+  cat("\nComparación de las raíces:\n")
+  cat("Raíz 1:", raiz1, "\n")
+  cat("Raíz 2:", raiz2, "\n")
+  cat("Raíz 3:", raiz3, "\n")
+  
+  # Verificar si las raíces son distintas
+  if (raiz1 != raiz2 && raiz1 != raiz3 && raiz2 != raiz3) {
+    cat("Las tres raíces son distintas.\n")
+  } else {
+    cat("Al menos dos raíces son iguales.\n")
+  }
+} else {
+  cat("\nNo se encontraron todas las raíces. No es posible comparar.\n")
+}
+
+# Graficar el polinomio y las raíces encontradas
+x <- seq(-2, 3, length.out = 400)
+y <- f(x)
+
+plot(x, y, type = "l", col = "blue", lwd = 2, main = "Gráfica del polinomio cúbico",
+     xlab = "x", ylab = "f(x)", ylim = c(-2, 4))
+abline(h = 0, col = "black", lty = 2)  # Línea horizontal en y = 0
+
+# Marcar las raíces encontradas (si existen)
+if (exists("raiz1")) points(raiz1, f(raiz1), col = "red", pch = 19)  # Punto para la primera raíz
+if (exists("raiz2")) points(raiz2, f(raiz2), col = "green", pch = 19)  # Punto para la segunda raíz
+if (exists("raiz3")) points(raiz3, f(raiz3), col = "purple", pch = 19)  # Punto para la tercera raíz
+
+legend("topright", legend = c("Raíz 1", "Raíz 2", "Raíz 3"), 
+       col = c("red", "green", "purple"), pch = 19)
+```
+
+
+
+
+
+
+**Aproximaciones para la segunda raíz**
+
+
+::: {#exr-tarea1_3}
+$f(x)= x^2 -2xe^{-x}+e^{-2x}$, para $0\leq x \leq 1$
+:::
+```{r}
+#Grafica de la función
+# Definición de la función
+f <- function(x) {
+  return(x^2 - 2 * x * exp(-x) + exp(-2 * x))
+}
+
+# Generar valores para x
+x_values <- seq(0, 1, by = 0.01)
+y_values <- f(x_values)
+
+# Graficar la función
+plot(x_values, y_values, type = "l", col = "blue", lwd = 2,
+     main = "Gráfica de f(x) = x^2 - 2xe^{-x} + e^{-2x}",
+     xlab = "x", ylab = "f(x)")
+abline(h = 0, col = "red", lty = 2) # Línea horizontal en y=0
+
+```
+Metodo de bisección
+```{r}
+# Método de Bisección
+biseccion <- function(f, a, b, tol = 1e-6, max_iter = 100) {
+  # f: función a la que se le busca la raíz
+  # a: límite inferior del intervalo
+  # b: límite superior del intervalo
+  # tol: tolerancia (error máximo permitido)
+  # max_iter: número máximo de iteraciones
+
+  if (f(a) * f(b) > 0) {
+    stop("La función no cambia de signo en el intervalo dado.")
+  }
+
+  iter <- 0
+  while ((b - a) / 2 > tol && iter < max_iter) {
+    c <- (a + b) / 2  # Punto medio
+    if (f(c) == 0) {
+      return(c)  # c es la raíz exacta
+    } else if (f(a) * f(c) < 0) {
+      b <- c  # La raíz está en el subintervalo [a, c]
+    } else {
+      a <- c  # La raíz está en el subintervalo [c, b]
+    }
+    iter <- iter + 1
+  }
+
+  # Devolver el punto medio como aproximación de la raíz
+  return((a + b) / 2)
+}
+
+# Ejemplo de uso:
+# Definir la función
+f <- function(x) { x^3 - 2*x^2 - 5*x + 6 }
+
+# Encontrar una raíz en el intervalo [1, 2.5]
+raiz <- biseccion(f, 1, 2.5)
+print(raiz)
+
+# Encontrar una raíz en el intervalo [-3, 0]
+raiz <- biseccion(f, -3, 0)
+print(raiz)
+
+# Encontrar una raíz en el intervalo [2.5, 4]
+raiz <- biseccion(f, 2.5, 4)
+print(raiz)
+```
+Método Newton-Raphson
+```{r}
+# Método de Newton-Raphson
+newton_raphson <- function(f, f_prima, x0, tol = 1e-6, max_iter = 100) {
+  # f: función para la cual se busca la raíz
+  # f_prima: derivada de la función f
+  # x0: aproximación inicial de la raíz
+  # tol: tolerancia (error máximo permitido)
+  # max_iter: número máximo de iteraciones
+
+  x <- x0
+  for (i in 1:max_iter) {
+    x_nuevo <- x - f(x) / f_prima(x)
+    if (abs(x_nuevo - x) < tol) {
+      return(x_nuevo) # Convergencia alcanzada
+    }
+    x <- x_nuevo
+  }
+
+  warning("El método no convergió después de ", max_iter, " iteraciones.")
+  return(x) # Retorna la última aproximación
+}
+
+# Ejemplo de uso:
+# Definir la función y su derivada
+f <- function(x) { x^3 - 2*x^2 - 5*x + 6 }
+f_prima <- function(x) { 3*x^2 - 4*x - 5 }
+
+# Encontrar una raíz con una aproximación inicial de 1.5
+raiz <- newton_raphson(f, f_prima, 1.5)
+print(raiz)
+
+# Encontrar otra raíz con una aproximación inicial de -2
+raiz <- newton_raphson(f, f_prima, -2)
+print(raiz)
+
+# Encontrar otra raíz con una aproximación inicial de 3
+raiz <- newton_raphson(f, f_prima, 3)
+print(raiz)
+```
+Metodo de la secante
+```{r}
+secante <- function(f, x0, x1, tol = 1e-6, max_iter = 100) {
+  # f: función para la cual se busca la raíz
+  # x0, x1: aproximaciones iniciales de la raíz
+  # tol: tolerancia (error máximo permitido)
+  # max_iter: número máximo de iteraciones
+
+  iter <- 0
+  while (abs(x1 - x0) > tol && iter < max_iter) {
+    # Fórmula del método de la secante
+    x_nuevo <- x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
+    
+    # Actualizar valores
+    x0 <- x1
+    x1 <- x_nuevo
+    
+    iter <- iter + 1
+  }
+
+  if (iter == max_iter) {
+    warning("El método no convergió después de ", max_iter, " iteraciones.")
+  }
+
+  return(x1) # Retorna la última aproximación
+}
+
+# Ejemplo de uso:
+# Definir la función
+f <- function(x) { x^3 - 2*x^2 - 5*x + 6 }
+
+# Encontrar una raíz con aproximaciones iniciales de 1 y 1.5
+raiz <- secante(f, 1, 1.5)
+print(raiz)
+
+# Encontrar otra raíz con aproximaciones iniciales de -2.5 y -1.5
+raiz <- secante(f, -2.5, -1.5)
+print(raiz)
+
+# Encontrar otra raíz con aproximaciones iniciales de 2.8 y 3.2
+raiz <- secante(f, 2.8, 3.2)
+print(raiz)
+```
+
+::: {#exr-tarea1_4}
+$g(x)= e^x-a$ donde $a=1, 3, 5$.
+
+
+Gráfica de la función
+
+```{r}
+# Cargar la biblioteca ggplot2
+library(ggplot2)
+
+# Definir la función g(x) = e^x - a
+g <- function(x, a) {
+  return(exp(x) - a)
+}
+
+# Crear un conjunto de valores de x
+x <- seq(-2, 2, length.out = 400)
+
+# Definir los valores de a
+a_values <- c(1, 3, 5)
+
+# Crear un data frame para almacenar los datos
+data <- data.frame()
+
+# Generar los datos para cada valor de a
+for (a in a_values) {
+  data <- rbind(data, data.frame(x = x, g_x = g(x, a), a = as.factor(a)))
+}
+
+# Graficar usando ggplot2
+ggplot(data, aes(x = x, y = g_x, color = a)) +
+  geom_line(linewidth = 1) +
+  labs(
+    title = expression(paste("Gráfica de ", g(x) == e^x - a, " para ", a == "1, 3, 5")),
+    x = "x",
+    y = "g(x)"
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(values = c("red", "blue", "green"))
+```
+
+
+
+
+**Aproximaciones para la raíz cuando a=1**
+
+Método bisección.
+
+```{r}
+# Definir la función g(x) = e^x - a
+g <- function(x, a) {
+  return(exp(x) - a)
+}
+
+# Método de bisección
+biseccion <- function(f, a, b, tol = 1e-6, max_iter = 100) {
+  # Verificar que el intervalo es válido
+  if (f(a) * f(b) >= 0) {
+    stop("La función no cambia de signo en el intervalo [a, b]. Elige otro intervalo.")
+  }
+  
+  iter <- 0
+  while ((b - a) / 2 > tol && iter < max_iter) {
+    iter <- iter + 1
+    c <- (a + b) / 2  # Punto medio
+    if (f(c) == 0) {  # Si encontramos la raíz exacta
+      break
+    } else if (f(c) * f(a) < 0) {  # La raíz está en [a, c]
+      b <- c
+    } else {  # La raíz está en [c, b]
+      a <- c
+    }
+  }
+  return((a + b) / 2)  # Devolver la aproximación de la raíz
+}
+
+# Parámetros
+a <- 1  # Valor de a en g(x) = e^x - a
+intervalo <- c(-1, 1)  # Intervalo inicial [a, b]
+tol <- 1e-6  # Tolerancia para la convergencia
+max_iter <- 100  # Número máximo de iteraciones
+
+# Aplicar el método de bisección
+raiz_aproximada <- biseccion(function(x) g(x, a), intervalo[1], intervalo[2], tol, max_iter)
+
+# Mostrar el resultado
+cat("La raíz aproximada de g(x) = e^x -", a, "es:", raiz_aproximada, "\n")
+```
+
+
+
+Método Newton-Raphson. Hay que brindar la primera derivada $g'(x)=e^x$.
+
+```{r}
+# Definir la función g(x) = e^x - a
+g <- function(x, a) {
+  return(exp(x) - a)
+}
+
+# Definir la derivada g'(x) = e^x
+g_prime <- function(x) {
+  return(exp(x))
+}
+
+# Método de Newton-Raphson
+newton_raphson <- function(f, f_prime, x0, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  x <- x0
+  while (abs(f(x)) > tol && iter < max_iter) {
+    iter <- iter + 1
+    x <- x - f(x) / f_prime(x)  # Fórmula de Newton-Raphson
+  }
+  return(x)  # Devolver la aproximación de la raíz
+}
+
+# Parámetros
+a <- 1  # Valor de a en g(x) = e^x - a
+x0 <- 1  # Valor inicial (puedes cambiarlo según sea necesario)
+tol <- 1e-6  # Tolerancia para la convergencia
+max_iter <- 100  # Número máximo de iteraciones
+
+# Aplicar el método de Newton-Raphson
+raiz_aproximada <- newton_raphson(function(x) g(x, a), g_prime, x0, tol, max_iter)
+
+# Mostrar el resultado
+cat("La raíz aproximada de g(x) = e^x -", a, "es:", raiz_aproximada, "\n")
+```
+
+
+Método de la secante
+
+```{r}
+# Definir la función g(x) = e^x - a
+g <- function(x, a) {
+  return(exp(x) - a)
+}
+
+# Método de la secante
+secante <- function(f, x0, x1, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  while (abs(f(x1)) > tol && iter < max_iter) {
+    iter <- iter + 1
+    # Calcular el siguiente punto usando la fórmula de la secante
+    x_next <- x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
+    
+    # Actualizar los valores para la siguiente iteración
+    x0 <- x1
+    x1 <- x_next
+  }
+  return(x1)  # Devolver la aproximación de la raíz
+}
+
+# Parámetros
+a <- 1  # Valor de a en g(x) = e^x - a
+x0 <- -1  # Primer valor inicial
+x1 <- 1   # Segundo valor inicial
+tol <- 1e-6  # Tolerancia para la convergencia
+max_iter <- 100  # Número máximo de iteraciones
+
+# Aplicar el método de la secante
+raiz_aproximada <- secante(function(x) g(x, a), x0, x1, tol, max_iter)
+
+# Mostrar el resultado
+cat("La raíz aproximada de g(x) = e^x -", a, "es:", raiz_aproximada, "\n")
+```
+
+
+Añadir comentarios acerca del número de iteraciones en cada método. Y comparar las raíces.
+
+
+```{r}
+# Definir la función g(x) = e^x - a
+g <- function(x, a) {
+  return(exp(x) - a)
+}
+
+# Definir la derivada g'(x) = e^x
+g_prime <- function(x) {
+  return(exp(x))
+}
+
+# Método de bisección
+biseccion <- function(f, a, b, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  while ((b - a) / 2 > tol && iter < max_iter) {
+    iter <- iter + 1
+    c <- (a + b) / 2  # Punto medio
+    if (f(c) == 0) {  # Si encontramos la raíz exacta
+      break
+    } else if (f(c) * f(a) < 0) {  # La raíz está en [a, c]
+      b <- c
+    } else {  # La raíz está en [c, b]
+      a <- c
+    }
+  }
+  return(list(root = (a + b) / 2, iterations = iter))
+}
+
+# Método de Newton-Raphson
+newton_raphson <- function(f, f_prime, x0, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  x <- x0
+  while (abs(f(x)) > tol && iter < max_iter) {
+    iter <- iter + 1
+    x <- x - f(x) / f_prime(x)  # Fórmula de Newton-Raphson
+  }
+  return(list(root = x, iterations = iter))
+}
+
+# Método de la secante
+secante <- function(f, x0, x1, tol = 1e-6, max_iter = 100) {
+  iter <- 0
+  while (abs(f(x1)) > tol && iter < max_iter) {
+    iter <- iter + 1
+    # Calcular el siguiente punto usando la fórmula de la secante
+    x_next <- x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
+    
+    # Actualizar los valores para la siguiente iteración
+    x0 <- x1
+    x1 <- x_next
+  }
+  return(list(root = x1, iterations = iter))
+}
+
+# Parámetros
+a <- 1  # Valor de a en g(x) = e^x - a
+tol <- 1e-6  # Tolerancia para la convergencia
+max_iter <- 100  # Número máximo de iteraciones
+
+# Intervalo inicial para el método de bisección
+intervalo <- c(-1, 1)
+
+# Valor inicial para el método de Newton-Raphson
+x0_newton <- 1
+
+# Valores iniciales para el método de la secante
+x0_secante <- -1
+x1_secante <- 1
+
+# Aplicar los métodos
+resultado_biseccion <- biseccion(function(x) g(x, a), intervalo[1], intervalo[2], tol, max_iter)
+resultado_newton <- newton_raphson(function(x) g(x, a), g_prime, x0_newton, tol, max_iter)
+resultado_secante <- secante(function(x) g(x, a), x0_secante, x1_secante, tol, max_iter)
+
+# Mostrar resultados
+cat("Método de bisección:\n")
+cat("  Raíz aproximada:", resultado_biseccion$root, "\n")
+cat("  Iteraciones:", resultado_biseccion$iterations, "\n\n")
+
+cat("Método de Newton-Raphson:\n")
+cat("  Raíz aproximada:", resultado_newton$root, "\n")
+cat("  Iteraciones:", resultado_newton$iterations, "\n\n")
+
+cat("Método de la secante:\n")
+cat("  Raíz aproximada:", resultado_secante$root, "\n")
+cat("  Iteraciones:", resultado_secante$iterations, "\n\n")
+
+# Comparar las raíces
+cat("Comparación de las raíces:\n")
+cat("  Bisección vs Newton-Raphson:", abs(resultado_biseccion$root - resultado_newton$root), "\n")
+cat("  Bisección vs Secante:", abs(resultado_biseccion$root - resultado_secante$root), "\n")
+cat("  Newton-Raphson vs Secante:", abs(resultado_newton$root - resultado_secante$root), "\n")
+```
+
+**Aproximaciones para la raíz cuando a=3**
+
+Método bisección.
+
+```{python}
+#| code-fold: true
+
+root_biseccion, info_biseccion = optimize.bisect(g3, 1, 1.5, full_output = True)
+
+print("Información de la convergencia del método:")
+print(info_biseccion)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_biseccion}")
+```
+
+
+Método Newton-Raphson. Hay que brindar la primera derivada $g'(x)=e^x$.
+
+
+```{python}
+#| code-fold: true
+
+# Se brinda la derivada de la función
+g_der = lambda x: np.exp(x)
+# Se aplica el método de Newton-Raphson
+root_newton, info_newton = optimize.newton(g3, 1, g_der, full_output = True)
+
+
+print("Información de la convergencia del método de Newton-Raphson:")
+print(info_newton)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_newton}")
+```
+
+Método de la secante
+
+```{python}
+#| code-fold: true
+
+# Se aplica el método de la secante
+root_secante, info_secante = optimize.newton(g3, x0 = -0.5, x1= 1.5, full_output = True)
+
+
+print("Información de la convergencia del método de la secante:")
+print(info_secante)
+print("------------------------------------")
+print(f"La raíz de la función es: {root_secante}")
+```
+
+Añadir comentarios acerca del número de iteraciones en cada método. Y comparar las raíces.
+
+
+```{python}
+round(root_biseccion,10) == round(root_newton, 10)
+```
+
+
+:::
+
+::: {#exr-tarea1_5}
+$g(x)= e^x-log(x+1) -b$ donde $b=2, 3, 5$.
+```{r}
+# Cargar la biblioteca ggplot2
+library(ggplot2)
+
+# Definir la función g(x) = e^x - log(x + 1) - b
+g <- function(x, b) {
+  return(exp(x) - log(x + 1) - b)
+}
+
+# Crear un conjunto de valores de x (evitando x <= -1 para que log(x + 1) esté definido)
+x <- seq(-0.99, 2, length.out = 400)
+
+# Definir los valores de b
+b_values <- c(2, 3, 5)
+
+# Crear un data frame para almacenar los datos
+data <- data.frame()
+
+# Generar los datos para cada valor de b
+for (b in b_values) {
+  data <- rbind(data, data.frame(x = x, g_x = g(x, b), b = as.factor(b)))
+}
+
+# Graficar usando ggplot2
+ggplot(data, aes(x = x, y = g_x, color = b)) +
+  geom_line(linewidth = 1) +
+  labs(
+    title = expression(paste("Gráfica de ", g(x) == e^x - log(x + 1) - b, " para ", b == "2, 3, 5")),
+    x = "x",
+    y = "g(x)"
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(values = c("red", "blue", "green"))
+```
+
+:::
+
+::: {#exr-tarea1_6}
+$f(x)= \sqrt{x}-sen(x) -c$ donde $c=1,\pi$.
+:::
+```{r}
+# Cargar la biblioteca ggplot2
+library(ggplot2)
+
+# Definir la función f(x) = sqrt(x) - sin(x) - c
+f <- function(x, c) {
+  return(sqrt(x) - sin(x) - c)
+}
+
+# Crear un conjunto de valores de x (x debe ser >= 0 porque sqrt(x) está definido para x >= 0)
+x <- seq(0, 10, length.out = 400)
+
+# Definir los valores de c
+c_values <- c(1, pi)
+
+# Crear un data frame para almacenar los datos
+data <- data.frame()
+
+# Generar los datos para cada valor de c
+for (c in c_values) {
+  data <- rbind(data, data.frame(x = x, f_x = f(x, c), c = as.factor(c)))
+}
+
+# Graficar usando ggplot2
+ggplot(data, aes(x = x, y = f_x, color = c)) +
+  geom_line(linewidth = 1) +
+  labs(
+    title = expression(paste("Gráfica de ", f(x) == sqrt(x) - sin(x) - c, " para ", c == "1, ", pi)),
+    x = "x",
+    y = "f(x)"
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(values = c("red", "blue"))
+```
+
+::: {#exr-tarea1_7}
+El sistema de ecuaciones no lineales:
+
+\begin{eqnarray}
+y^2 - x^2 + 4x - 2 &=& 0\\
+x^2 +3y^2 - 4 &=& 0\\
+\end{eqnarray}
+
+tiene dos soluciones. Realiza una gráfica de las curvas de nivel y aproxima las soluciones con la función `fsolve`.
+
+Gráfica de las curvas de nivel.
+
+```{r}
+# Cargar las bibliotecas necesarias
+library(rootSolve)  # Para resolver el sistema de ecuaciones
+library(ggplot2)    # Para graficar las curvas de nivel
+
+# Definir el sistema de ecuaciones no lineales
+sistema <- function(vars) {
+  x <- vars[1]
+  y <- vars[2]
+  c(
+    y^2 - x^2 + 4 * x - 2,  # Primera ecuación: y^2 - x^2 + 4x - 2 = 0
+    x^2 + 3 * y^2 - 4       # Segunda ecuación: x^2 + 3y^2 - 4 = 0
+  )
+}
+
+# Encontrar las soluciones usando fsolve (multiroot en R)
+solucion1 <- multiroot(sistema, start = c(1, 1))$root  # Solución 1
+solucion2 <- multiroot(sistema, start = c(-1, -1))$root  # Solución 2
+
+# Imprimir las soluciones
+cat("Solución 1: x =", solucion1[1], ", y =", solucion1[2], "\n")
+cat("Solución 2: x =", solucion2[1], ", y =", solucion2[2], "\n")
+
+# Crear una malla de valores para x e y
+x <- seq(-3, 3, length.out = 100)
+y <- seq(-3, 3, length.out = 100)
+grid <- expand.grid(x = x, y = y)
+
+# Evaluar las ecuaciones en la malla
+grid$eq1 <- grid$y^2 - grid$x^2 + 4 * grid$x - 2  # Primera ecuación
+grid$eq2 <- grid$x^2 + 3 * grid$y^2 - 4          # Segunda ecuación
+
+# Graficar las curvas de nivel usando ggplot2
+ggplot(grid, aes(x = x, y = y)) +
+  geom_contour(aes(z = eq1, color = "Ecuación 1"), breaks = 0, linewidth = 1) +
+  geom_contour(aes(z = eq2, color = "Ecuación 2"), breaks = 0, linewidth = 1) +
+  geom_point(aes(x = solucion1[1], y = solucion1[2]), color = "red", size = 3) +  # Solución 1
+  geom_point(aes(x = solucion2[1], y = solucion2[2]), color = "blue", size = 3) +  # Solución 2
+  labs(
+    title = "Curvas de nivel del sistema de ecuaciones no lineales",
+    x = "x",
+    y = "y",
+    color = "Ecuaciones"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Ecuación 1" = "blue", "Ecuación 2" = "green"))
+```
+
+
+:::
+
+::: {#exr-tarea1_8}
+Considera el siguiente sistema:
+
+\begin{eqnarray}
+sen(x) + y^2 - 1 &=& 0\\
+x + cos(y) - 1 &=& 0\\
+\end{eqnarray}
+
+Realiza una gráfica de las curvas de nivel y aproxima la solución con la función `fsolve`.
+:::
+```{r}
+# Definir las ecuaciones del sistema
+ecuacion1 <- function(x, y) {
+  sin(x) + y^2 - 1
+}
+
+ecuacion2 <- function(x, y) {
+  x + cos(y) - 1
+}
+
+# Crear una función para el sistema de ecuaciones
+sistema <- function(vars) {
+  x <- vars[1]
+  y <- vars[2]
+
+  eq1 <- ecuacion1(x, y)
+  eq2 <- ecuacion2(x, y)
+
+  return(c(eq1 = eq1, eq2 = eq2))
+}
+
+# Graficar las curvas de nivel
+library(ggplot2)
+library(dplyr)
+
+# Define el rango de valores para x e y
+x_vals <- seq(-2, 2, length.out = 100)
+y_vals <- seq(-2, 2, length.out = 100)
+
+# Crea un data frame con todas las combinaciones de x e y
+grid_df <- expand.grid(x = x_vals, y = y_vals)
+
+# Calcula los valores de las ecuaciones en cada punto del grid
+grid_df <- grid_df %>%
+  mutate(z1 = ecuacion1(x, y),
+         z2 = ecuacion2(x, y))
+
+# Crea las gráficas de contorno
+ggplot(grid_df, aes(x = x, y = y)) +
+  geom_contour(aes(z = z1), color = "blue", breaks = c(0)) +
+  geom_contour(aes(z = z2), color = "red", breaks = c(0)) +
+  labs(title = "Curvas de Nivel del Sistema de Ecuaciones",
+       x = "x",
+       y = "y") +
+  theme_bw()
+
+# Usar fsolve para encontrar la solución numérica
+library(nleqslv)
+
+# Estimación inicial (basada en la gráfica)
+estimacion_inicial <- c(x = 0.5, y = 0.5)
+
+# Resolver el sistema de ecuaciones
+solucion <- nleqslv(estimacion_inicial, sistema)
+
+# Extraer la solución
+x_solucion <- solucion$x[1]
+y_solucion <- solucion$x[2]
+
+# Imprimir la solución
+cat("Solución del sistema:\n")
+cat("x =", x_solucion, "\n")
+cat("y =", y_solucion, "\n")
+
+```
+
+::: {#exr-tarea1_9}
+Para el siguiente sistema de ecuaciones no lineal:
+
+\begin{eqnarray}
+x^3 + y - 6 &=& 0\\
+y^3 -x - 4 &=& 0\\
+\end{eqnarray}
+
+Realiza una gráfica de las curvas de nivel y aproxima la solución con la función `fsolve`.
+:::
+```{r}
+# Definir las ecuaciones del sistema
+ecuacion1 <- function(x, y) {
+  x^3 + y - 6
+}
+
+ecuacion2 <- function(x, y) {
+  y^3 - x - 4
+}
+
+# Crear una función para el sistema de ecuaciones
+sistema <- function(vars) {
+  x <- vars[1]
+  y <- vars[2]
+  
+  eq1 <- ecuacion1(x, y)
+  eq2 <- ecuacion2(x, y)
+  
+  return(c(eq1 = eq1, eq2 = eq2))
+}
+
+# Graficar las curvas de nivel
+library(ggplot2)
+library(dplyr)
+
+# Define el rango de valores para x e y
+x_vals <- seq(-4, 4, length.out = 100)
+y_vals <- seq(-4, 4, length.out = 100)
+
+# Crea un data frame con todas las combinaciones de x e y
+grid_df <- expand.grid(x = x_vals, y = y_vals)
+
+# Calcula los valores de las ecuaciones en cada punto del grid
+grid_df <- grid_df %>%
+  mutate(z1 = ecuacion1(x, y),
+         z2 = ecuacion2(x, y))
+
+# Crea las gráficas de contorno
+ggplot(grid_df, aes(x = x, y = y)) +
+  geom_contour(aes(z = z1), color = "blue", breaks = c(0)) +
+  geom_contour(aes(z = z2), color = "red", breaks = c(0)) +
+  labs(title = "Curvas de Nivel del Sistema de Ecuaciones",
+       x = "x",
+       y = "y") +
+  theme_bw()
+
+# Usar fsolve para encontrar la solución numérica
+library(nleqslv)
+
+# Estimación inicial
+estimacion_inicial <- c(x = 1, y = 1)
+
+# Resolver el sistema de ecuaciones
+solucion <- nleqslv(estimacion_inicial, sistema)
+
+# Extraer la solución
+x_solucion <- solucion$x[1]
+y_solucion <- solucion$x[2]
+
+# Imprimir la solución
+cat("Solución del sistema:\n")
+cat("x =", x_solucion, "\n")
+cat("y =", y_solucion, "\n")
+```
+
+::: {#exr-tarea1_10}
+Consideraremos un sistema de ecuaciones no lineal para describir un modelo de equilibrio económico.
+
+1.  Curva de demanda no lineal
+
+\begin{equation}
+q_d = 200 - 10 p^2
+\end{equation}
+
+2.  Curva de oferta no lineal
+
+\begin{equation}
+q_s = 5 p^3 + 15
+\end{equation}
+
+El equilibrio ocurre cuando
+
+\begin{equation}
+q_s = q_d
+\end{equation}
+
+O bien
+
+\begin{eqnarray}
+q + 10p^2 -200  &=& 0\\
+q - 5p^3 - 15 &=& 0\\
+\end{eqnarray}
+
+Realiza una gráfica de las curvas y aproxima el punto de equilibrio con la función `fsolve`.
+```{r}
+# Definir las ecuaciones de demanda y oferta
+demanda <- function(p) {
+  200 - 10 * p^2
+}
+
+oferta <- function(p) {
+  5 * p^3 + 15
+}
+
+# Definir la función para el sistema de ecuaciones (igualando a cero)
+ecuaciones <- function(x) {
+  p <- x[1]  # Precio
+  q <- x[2]  # Cantidad
+  
+  eq1 <- q - (200 - 10 * p^2)  # Demanda igualada a q
+  eq2 <- q - (5 * p^3 + 15)    # Oferta igualada a q
+  
+  return(c(eq1, eq2))
+}
+
+# Usar fsolve para encontrar el equilibrio
+library(nleqslv)
+
+# Estimación inicial (precio y cantidad)
+estimacion_inicial <- c(p = 2, q = 100)
+
+# Resolver el sistema de ecuaciones
+solucion <- nleqslv(estimacion_inicial, ecuaciones)
+
+# Extraer el precio y la cantidad de equilibrio
+precio_equilibrio <- solucion$x[1]
+cantidad_equilibrio <- solucion$x[2]
+
+# Imprimir los resultados
+cat("Precio de equilibrio:", precio_equilibrio, "\n")
+cat("Cantidad de equilibrio:", cantidad_equilibrio, "\n")
+
+# Crear una secuencia de precios para la gráfica
+precios <- seq(0, 5, by = 0.1)
+
+# Calcular las cantidades de demanda y oferta para cada precio
+cantidades_demanda <- demanda(precios)
+cantidades_oferta <- oferta(precios)
+
+# Graficar las curvas de demanda y oferta
+plot(precios, cantidades_demanda, type = "l", col = "blue", 
+     xlab = "Precio", ylab = "Cantidad", 
+     main = "Equilibrio del Mercado", 
+     xlim = c(0, 5), ylim = c(0, 250))
+lines(precios, cantidades_oferta, col = "red")
+
+# Añadir un punto en el equilibrio
+points(precio_equilibrio, cantidad_equilibrio, col = "green", pch = 16, cex = 1.5)
+
+# Añadir leyenda
+legend("topright", legend = c("Demanda", "Oferta", "Equilibrio"), 
+       col = c("blue", "red", "green"), lty = c(1, 1, NA), pch = c(NA, NA, 16))
+
+```
+
+:::
