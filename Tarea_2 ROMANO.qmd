@@ -1,0 +1,723 @@
+---
+title: "Tarea 2. Interpolación"
+author: "ROMANO"
+format: html
+editor: visual
+lang: es
+---
+
+Importamos packages y funciones necesarias:
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+from scipy.interpolate import lagrange
+from numpy.polynomial.polynomial import Polynomial
+from scipy.interpolate import CubicSpline
+```
+
+::: {#exr-tarea2_1}
+Sea $f(x)=e^x\,cos(x)$ y $x_0=0$
+
+a)  Calcular y graficar los polinomios de Taylor hasta grado $n=5$.
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+
+f = lambda x: np.exp(x)*np.cos(x)
+
+p_1 = lambda x: 1 + x
+p_2 = lambda x: 1 + x
+p_3 = lambda x: 1 + x - (1/3)*x**3
+p_4 = lambda x: 1 + x - (1/3)*x**3 - (1/6)*x**4
+p_5 = lambda x: 1 + x - (1/3)*x**3 - (1/6)*x**4 - (1/30)*x**5
+
+
+x = np.linspace(-2, 2, 500)
+
+# Configurar la figura
+plt.figure(figsize=(12, 10))
+
+# Graficar la función original
+plt.plot(x, f(x), 'k--', label="f(x)=e^x cos(x)")
+
+# Graficar las aproximaciones de Taylor
+plt.plot(x, p_1(x), label="Grado 1: 1 + x")
+plt.plot(x, p_2(x), label="Grado 2: 1 + x")
+plt.plot(x, p_3(x), label="Grado 3: 1 + x - (1/3)x³")
+plt.plot(x, p_4(x), label="Grado 4: 1 + x - (1/3)x³ - (1/6)x⁴")
+plt.plot(x, p_5(x), label="Grado 5: 1 + x - (1/3)x³ - (1/6)x⁴ - (1/30)x⁵")
+
+# Configuraciones adicionales del gráfico
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid()
+plt.legend()
+plt.title("Aproximación de Taylor de f(x) = e^x cos(x)")
+plt.show()
+```
+
+
+b)  Usar $P_5(0.5)$ para aproximar $f(0.5)$.
+```{python}
+f = lambda x: np.exp(x)*np.cos(x)
+
+P_5 = lambda x: 1 + x - (1/3) * x**3 - (1/6) * x**4 - (1/30) * x**5
+
+x_val = 0.5 
+aprox_P5 = P_5(x_val)
+valor_exacto = f(x_val)
+
+print("------------------------")
+print(f"Aproximación P5(0.5): {aprox_P5}")
+print(f"Valor Exacto f(0.5): {valor_exacto}")
+```
+
+
+c)  Encontrar una cota superior para el error $|f(0.5)-P_5(0.5)|$
+```{python}
+
+print(f"La cota superior para el error es {132/720}")
+print(f"La diferencia |f(0.5)-P_5(0.5)| = {np.abs(f(0.5)-aprox_P5)}")
+print(f"¿La diferencia es menor que la cota superior? {np.abs(f(0.5)-aprox_P5)<132/720}")
+```
+:::
+
+::: {#exr-tarea2_2}
+Consideremos los siguientes puntos en $\mathbb{R}^2$:
+
+\begin{equation}
+\begin{array}{l|c|c|c|c|} 
+\text{x} & 0 & 1 & 2 & 3 \\
+\hline \text{y} & y_0 & y_1 & y_2 & y_3  
+\end{array}
+\end{equation}
+
+a)  Encontrar y graficar los polinomios base para el polinomio de Lagrange que contiene a los puntos.
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+val_x = [0, 1, 2, 3]
+val_y = [-2, 5, -4, 7]
+
+L1 = lambda x: (x-val_x[1])*(x-val_x[2])*(x-val_x[3])/((val_x[0]-val_x[1])*(val_x[0]-val_x[2])*(val_x[0]-val_x[3]))
+L2 = lambda x: (x-val_x[0])*(x-val_x[2])*(x-val_x[3])/((val_x[1]-val_x[0])*(val_x[1]-val_x[2])*(val_x[1]-val_x[3]))
+L3 = lambda x: (x-val_x[0])*(x-val_x[1])*(x-val_x[3])/((val_x[2]-val_x[0])*(val_x[2]-val_x[1])*(val_x[2]-val_x[3]))
+L4 = lambda x: (x-val_x[0])*(x-val_x[1])*(x-val_x[2])/((val_x[3]-val_x[0])*(val_x[3]-val_x[1])*(val_x[3]-val_x[2]))
+
+xnew = np.linspace(-2, 5, 300)  
+x_zeros = np.zeros(len(val_x))
+x_ones = np.ones(len(val_x))
+
+plt.figure(figsize=(9, 4))
+plt.plot(xnew, L1(xnew), label="L1", color="red")
+plt.plot(xnew, L2(xnew), label="L2", color="black")  
+plt.plot(xnew, L3(xnew), label="L3", color="orange")
+plt.plot(xnew, L4(xnew), label="L4", color="blue")
+plt.plot(val_x, x_zeros, 'o', color="pink")  
+plt.plot(val_x, x_ones, 'o', color="pink")   
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+:::
+:::
+
+b)  Calcular y graficar el polinomio de Lagrange.
+```{python}
+begin
+p = lambda x: val_y[0] * L1(x) + val_y[1] * L2(x) + val_y[2] * L3(x) + val_y[3] * L4(x)
+plt.figure(figsize=(9,4))
+plt.plot(xnew,  p(xnew), label="Polinomio", color="green")
+plt.plot(val_x,val_y, "o", ms=6, label="Datos", color="purple")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+:::
+
+::: {#def-errores}
+Supongamos que $p^*$ es una aproximación de $p$. El **error real** es $p-p^*$, el **error absoluto** es $|p-p^*|$ y el error relativo es
+
+\begin{equation}
+\frac{|p-p^*|}{|p|},
+\end{equation}
+
+siempre y cuando $p\neq 0$.
+:::
+
+::: {#exr-tarea2_3}
+En cada inciso considera la función de valores reales y realiza lo siguiente:
+
+i.  Grafica los polinomios interpolantes de Lagrange con los puntos dados y aproxima el valor de la función y la derivada en el punto solicitado.
+
+ii. Grafica los splines cúbicos con frontera natural para los puntos dados y aproxima el valor de la función y la derivada en el punto solicitado.
+
+iii. Grafica los splines cúbicos con frontera condicionada para los puntos dados y aproxima el valor de la función y la derivada en el punto solicitado.
+
+En cada caso calcula el error real, el absoluto y el relativo.
+
+:::
+:::
+
+a)  $f(x)=e^{2x}$. Puntos: $x_0=0, x_1=0.25, x_2=0.5, x_3=0.75$. Aproximar $f(0.43)$ y $f'(0.43)$.
+
+```{python}
+f = lambda x : np.exp(2*x)
+f_der = lambda x : 2*np.exp(2*x)
+
+x = np.array([0, 0.25, 0.5, 0.75])
+y = f(x)
+
+poliLagrange = lagrange(x,y)
+SNatural=CubicSpline(x,y, bc_type ="natural")
+SCondicionado=CubicSpline(x,y, bc_type =((1,f_der(x[0])),(1,f_der(x[-1]))))
+
+x_val = np.linspace(-1, 2, 300)
+x_aprox = 0.43
+
+plt.figure(figsize=(9,4))
+plt.plot(x_val,  poliLagrange(x_val), label="Lagrange", color="brown")
+plt.plot(x_val,  SNatural(x_val), label="Spline Natural", color="blue")
+plt.plot(x_val,  SCondicionado(x_val), label="Spline Condicionado", color="orange")
+plt.plot(x, y,'o', label="Nodos de Interpolación", markersize=8, color="green")
+
+plt.axvline(x_aprox, color = "indigo", linewidth = 0.5, linestyle="--") 
+plt.axhline(x_aprox, color = "indigo", linewidth = 0.5, linestyle="--")
+
+plt.title("f(x)= e^(2x)")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+:::
+:::
+b)  $f(x)=x\,cos\,x-3x$. Puntos: $x_0=0, x_1=0.5, x_2=1, x_3=1.5$. Aproximar $f(0.8)$ y $f'(0.8)$.
+
+```{python}
+#| fig-align: "center"
+
+f = lambda x : x * np.cos(x) - 3*x
+f_der = lambda x : -x * np.sin(x) -3 + np.cos(x)
+
+x = np.array([0, 0.5, 1, 1.5])
+y = f(x)
+
+poliLagrange = lagrange(x,y)
+SNatural=CubicSpline(x,y, bc_type ="natural")
+SCondicionado=CubicSpline(x,y, bc_type =((1,f_der(x[0])),(1,f_der(x[-1]))))
+
+x_val = np.linspace(-0.5, 2.5, 500)
+x_aprox = 0.8
+
+plt.figure(figsize=(9,4))
+plt.plot(x_val,  poliLagrange(x_val), label="Lagrange", color="dodgerblue")
+plt.plot(x_val,  SNatural(x_val), label="Spline Natural", color="limegreen")
+plt.plot(x_val,  SCondicionado(x_val), label="Spline Condicionado", color="salmon")
+plt.plot(x, y,'o', label="Nodos de Interpolación", markersize=8, color="darkred")
+
+plt.axvline(x_aprox, color = "indigo", linewidth = 0.8, linestyle="--") 
+plt.axhline(x_aprox, color = "indigo", linewidth = 0.8, linestyle="--")
+
+plt.title("f(x)= xcos(x)-3x")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+```{python}
+x_aprox = 0.8
+# Evaluación de las funciones interpolantes y sus derivadas en el punto solicitado
+
+f_lagrange = poliLagrange(x_aprox)
+f_spline_natural = poli_spnat(x_aprox)
+f_spline_cond = poli_spCond(x_aprox)
+
+fder_lagrange = np.polyder(poliLagrange)(x_aprox)
+fder_spline_natural = poli_spnat.derivative()(x_aprox)
+fder_spline_cond = poli_spCond.derivative()(x_aprox)
+
+print(f"Aproximaciones en x = {x_aprox}:")
+print(f"Lagrange: f({x_aprox}) ≈ {f_lagrange}, f'({x_aprox}) ≈ {fder_lagrange}")
+print(f"Spline Natural: f({x_aprox}) ≈ {f_spline_natural}, f'({x_aprox}) ≈ {fder_spline_natural}")
+print(f"Spline Condicionado: f({x_aprox}) ≈ {f_spline_cond}, f'({x_aprox}) ≈ {fder_spline_cond}")
+
+```
+
+:::
+:::
+c)  $f(x)=log(e^x+2)$. Puntos: $x_0=-2, x_1=-1, x_2=0, x_3=1, x_4=2$. Aproximar $f(0.5)$ y $f'(0.5)$.
+:::
+:::
+```{python}
+#| code-fold: true
+#| fig-align: "center"
+
+
+f = lambda x: np.log(np.exp(x)+2)
+f_der = lambda x: np.exp(x)/(np.exp(x)+2)
+x = np.blue(-4,3)
+y = f(x)
+
+poli_lagrange = lagrange(x,y)
+poli_spnat = CubicSpline(x,y, bc_type= "natural")
+poli_spcond = CubicSpline(x,y, bc_type= ((1,f_der(x[0])), (1,f_der(x[-1]))))
+
+x_values = np.linspace(-2.5, 2.5, 500)
+
+plt.figure(figsize=(8,5))
+plt.plot(x_values, poli_lagrange(x_values), label="Lagrange")
+plt.plot(x_values, poli_spnat(x_values), label="Spline Natural")
+plt.plot(x_values, poli_spcond(x_values), label="Spline Cond")
+plt.plot(x, y,'o', label="Nodos")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+:::
+:::
+```{python}
+poli_lagrange(0.5)
+poli_spnat(0.5)
+poli_spcond(0.5)
+f(0.5)
+```
+:::
+:::
+
+::: {#exr-tarea2_4}
+Se sospecha que las elevadas concentraciones de tanina en las hojas de los robles maduros inhiben el crecimiento de las larvas de la polilla invernal (*Operophtera bromata L. Geometridae*) que tanto dañan a los árboles en algunos años. La tabla anexa contiene el peso promedio de dos muestras de larva, tomadas en los primeros 28 días después de nacimiento. La primera muestra se crió en hojas de robles jóvenes, mientras que la segunda lo hizo en hojas maduras del mismo árbol.
+:::
+:::
+a)  Usa la interpolación polinomial (Lagrange) para aproximar la curva del peso promedio de cada muestra.
+b)  Usa splines cúbicos para aproximar la curva del peso promedio de cada muestra.
+\begin{equation}
+\begin{array}{l|c|c|c|c|c|c|r} 
+\text{Día} & 0 & 6 & 10 & 13 & 17 & 20 & 28 \\
+\hline \text{Peso promedio muestra 1 (mg)} & 6.67 & 17.33 & 42.67 & 37.33 & 30.10 & 29.31 & 28.74 \\
+\text{Peso promedio muestra 2 (mg)} & 6.67 & 16.11 & 18.89 & 15.00 & 10.56 & 9.44 & 8.89
+\end{array}
+\end{equation}
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import lagrange, CubicSpline
+
+# Datos proporcionados
+dias = np.array([0, 6, 10, 13, 17, 20, 28])
+peso_muestra1 = np.array([6.67, 17.33, 42.67, 37.33, 30.10, 29.31, 28.74])
+peso_muestra2 = np.array([6.67, 16.11, 18.89, 15.00, 10.56, 9.44, 8.89])
+
+# a) Interpolación polinomial de Lagrange
+def interpolacion_lagrange(x, y):
+    poly = lagrange(x, y)
+    return poly
+
+# Crear polinomios de Lagrange para ambas muestras
+poly_m1 = interpolacion_lagrange(dias, peso_muestra1)
+poly_m2 = interpolacion_lagrange(dias, peso_muestra2)
+
+# b) Splines cúbicos
+def ajustar_splines(x, y):
+    cs = CubicSpline(x, y, bc_type='natural')
+    return cs
+
+# Crear splines cúbicos para ambas muestras
+spline_m1 = ajustar_splines(dias, peso_muestra1)
+spline_m2 = ajustar_splines(dias, peso_muestra2)
+
+# Generar puntos para graficar las curvas
+dias_interp = np.linspace(0, 28, 500)
+
+# Evaluar las interpolaciones
+lagrange_m1 = poly_m1(dias_interp)
+lagrange_m2 = poly_m2(dias_interp)
+spline_m1_vals = spline_m1(dias_interp)
+spline_m2_vals = spline_m2(dias_interp)
+
+# Graficar los resultados
+plt.figure(figsize=(14, 8))
+
+# Gráfico para la muestra 1
+plt.subplot(2, 2, 1)
+plt.plot(dias, peso_muestra1, 'o', label='Datos muestra 1')
+plt.plot(dias_interp, lagrange_m1, '-', label='Interpolación Lagrange')
+plt.title('Muestra 1 - Interpolación Polinomial')
+plt.xlabel('Días')
+plt.ylabel('Peso promedio (mg)')
+plt.legend()
+plt.grid(True)
+
+plt.subplot(2, 2, 2)
+plt.plot(dias, peso_muestra1, 'o', label='Datos muestra 1')
+plt.plot(dias_interp, spline_m1_vals, '-', label='Splines Cúbicos')
+plt.title('Muestra 1 - Splines Cúbicos')
+plt.xlabel('Días')
+plt.ylabel('Peso promedio (mg)')
+plt.legend()
+plt.grid(True)
+
+# Gráfico para la muestra 2
+plt.subplot(2, 2, 3)
+plt.plot(dias, peso_muestra2, 'o', label='Datos muestra 2')
+plt.plot(dias_interp, lagrange_m2, '-', label='Interpolación Lagrange')
+plt.title('Muestra 2 - Interpolación Polinomial')
+plt.xlabel('Días')
+plt.ylabel('Peso promedio (mg)')
+plt.legend()
+plt.grid(True)
+
+plt.subplot(2, 2, 4)
+plt.plot(dias, peso_muestra2, 'o', label='Datos muestra 2')
+plt.plot(dias_interp, spline_m2_vals, '-', label='Splines Cúbicos')
+plt.title('Muestra 2 - Splines Cúbicos')
+plt.xlabel('Días')
+plt.ylabel('Peso promedio (mg)')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
+# Mostrar los polinomios de Lagrange
+print("\nPolinomio de Lagrange para la Muestra 1:")
+print(poly_m1)
+print("\nPolinomio de Lagrange para la Muestra 2:")
+print(poly_m2)
+```
+
+:::
+::: {#exr-tarea2_5}
+Considera la siguiente tabla de datos para el agua:
+
+
+\begin{equation}
+\begin{array}{|l|c|c|c|c|c|} 
+\hline \text{T(°C)} & 50 & 60 & 65 & 75 & 80\\
+ \text{$\rho (kg/m^3)$} & 988 & 985.7 & 980.5 & 974.8 & 971.6  \\
+\hline
+\end{array}
+\end{equation}
+
+Donde $T$ es la temperatura y $\rho$ es la densidad.
+
+a)  Hacer la representación gráfica del spline cúbico y compararlo con el polinomio interpolante $P_4(x)$.
+
+```{python}
+# Codigo plegable: verdadero
+val_x - [50, 60, 65, 75, 80]
+val_y - [988. 985.7, 980.5, 974.8, 971.6]
+mi_spline = cubicspline(val_x, val_y, tipo_bc="natural")
+
+xnew = np.linspace(50, 80, 500)
+
+plt.figure(figsize=(9,4))
+plt.plot(xnew,  my_spline(xnew), label="Spline cúbico", color="indigo")
+plt.plot(val_x,val_y, "o", ms=6, label="Nodos", color="lilac")
+
+plt.title("Spline Cúbico")
+plt.xlabel ("Temperatura (°C)")
+plt.ylabel ("Densidad (kg/m^3)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+*Comparación del Spline Cúbico con el Polinomio Interpolante*
+
+```{python}
+#| code-fold: true
+
+x = np.array([50, 60, 65, 75, 80])
+y = np.array([988, 985.7, 980.5, 974.8, 971.6])
+
+polinomio = lagrange(x,y)
+my_spline = CubicSpline(val_x, val_y, bc_type="natural")
+
+x_new = np.linspace(50, 80,  500)
+
+plt.figure(figsize=(8,5))
+plt.plot(x_new, polinomio(x_new), color="dodgerblue", label = "Lagrange")
+plt.plot(xnew,  my_spline(xnew), label="Spline cúbico", color="darkviolet")
+plt.plot(x, y, "o", label="Nodos", color="darkred") 
+
+plt.title("Spline Cúbico y Polinomio Interpolante")
+plt.xlabel ("Temperatura (°C)")
+plt.ylabel ("Densidad (kg/m^3)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+b)  Aproximar la densidad para $T=63 °C$ y también la derivada.
+
+```{python}
+#| code-fold: true
+
+T_aprox = 63
+p_lagrange = polinomio(T_aprox)
+p_der_lagrange = np.polyder(polinomio)(T_aprox)
+
+p_sp = my_spline(T_aprox)
+p_der_sp = my_spline.derivative()(T_aprox)
+
+print(f"Aproximación de la densidad cuando T=63°C:")
+print(f"Lagrange: {p_lagrange}")
+print(f"Spline Cúbico: {p_sp}")
+print("--------------------------------")
+print(f"Aproximación de la derivada cuando T=63°C:")
+print(f"Lagrange: {p_der_lagrange}")
+print(f"Spline Cúbico: {p_der_sp}")
+
+```
+
+
+:::
+
+::: {#exr-tarea2_6}
+Llevar a cabo lo siguiente:
+
+i.  Genera una sucesión desde 0 hasta 10 con la función `np.arange` y asígnalo a la variable $x$.
+
+ii. Del conjunto $\{-25, -24, \dots, 24, 25\}\subset\mathbb{Z}$ toma una muestra con reemplazo que tenga la misma cantidad de elementos de $x$ y asígnalo a la variable $y$ (utilizar la función `np.random.choice`).
+
+iii. Encuentra el spline cúbico que que contiene a los puntos generados.
+
+```{python}
+#| code-fold: true
+
+#i
+x = np.arange(0,10)
+
+#ii
+conjunto = np.arange(-25,25)
+y = np.random.choice(conjunto, size=len(x), replace=True)
+
+#iii
+Spline_Cubico = CubicSpline(x,y, bc_type="natural")
+
+x_new = np.linspace(0,10,500)
+y_new = Spline_Cubico(x_new)
+
+plt.figure(figsize=(9,4))
+plt.plot(x_new, y_new, "-", label="Spline Cúbico", color="coral")
+plt.plot(x, y, "o", ms=6, label="Nodos", color="blue")
+
+plt.title("Spline Cúbico")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+
+:::
+
+::: {#exr-tarea2_7}
+Construye los splines cúbicos condicionados en $n$ nodos, donde $n= 4,5, 10, 20$ para las siguientes funciones en el intervalo dado. Con el de $n=20$ nodos calcula la diferencia máxima entre la función y el spline tomando 500 puntos distribuidos de manera uniforme en el intervalo.
+:::
+
+:::
+a)  $f(x) = e^{2x}\, cos 3x$, $[0,2]$.
+
+```{python}
+#| code-fold: true
+
+f = lambda x : np.exp(2*x)*np.cos(3*x)
+f_der = lambda x : -3*np.exp(2*x)*np.sin(3*x) + 2*np.cos(3*x)*np.exp(2*x)
+
+n_values = [4, 5, 10, 20]
+a, b = 0, 2
+
+x_new = np.linspace(a, b, 500)
+
+plt.figure(figsize=(9, 4))
+
+for n in (n_values):
+    x_nodos = np.linspace(a, b, n)
+    y_nodos = f(x_nodos)
+    
+    poli_spCond = CubicSpline(x_nodos, y_nodos, bc_type=((1, f_der(a)), (1, f_der(b))))
+    y_sp = poli_spCond(x_new)
+    
+    plt.plot(x_new, y_sp, label=f"Spline n={n}")
+    plt.plot(x_nodos, y_nodos, 'o', label="Nodos")
+
+plt.title("Splines Cúbicos Condicionados f(x)=e^(2x)cos(3x)")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+
+:::
+:::
+b)  $f(x) = sen(log\,x)$, $[1,10]$.
+
+```{python}
+#| code-fold: true
+
+f = lambda x : np.sin(np.log(x))
+f_der = lambda x : ((np.cos(np.log(x)))/(x))
+
+n_values = [4, 5, 10, 20]
+a, b = 1, 10
+
+x_new = np.linspace(a, b, 500)
+
+plt.figure(figsize=(9, 4))
+
+for n in (n_values):
+    x_nodos = np.linspace(a, b, n)
+    y_nodos = f(x_nodos)
+    
+    poli_spCond = CubicSpline(x_nodos, y_nodos, bc_type=((1, f_der(a)), (1, f_der(b))))
+    y_sp = poli_spCond(x_new)
+    
+    plt.plot(x_new, y_sp, label=f"Spline n={n}")
+    plt.plot(x_nodos, y_nodos, 'o', label="Nodos")
+
+plt.title("Splines Cúbicos Condicionados f(x)=sin(log(x))")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+:::
+
+c)  $f(x) = e^{x}+e^{-x}$, $[0,3]$.
+```{python}
+#| code-fold: true
+
+f = lambda x : np.exp(x) + np.exp(-x)
+f_der = lambda x : np.exp(x) - np.exp(-x)
+
+n_values = [4, 5, 10, 20]
+a, b = 0, 3
+
+x_new = np.linspace(a, b, 500)
+
+plt.figure(figsize=(9, 4))
+
+for n in (n_values):
+    x_nodos = np.linspace(a, b, n)
+    y_nodos = f(x_nodos)
+    
+    poli_spCond = CubicSpline(x_nodos, y_nodos, bc_type=((1, f_der(a)), (1, f_der(b))))
+    y_sp = poli_spCond(x_new)
+    
+    plt.plot(x_new, y_sp, label=f"Spline n={n}")
+    plt.plot(x_nodos, y_nodos, 'o', label="Nodos")
+
+plt.title("Splines Cúbicos Condicionados f(x)=e^(x) + e^(-x)")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+
+:::
+
+d)  $f(x) = cos \,x+sen\,x$, $[0,2\pi]$.
+```{python}
+#| code-fold: true
+
+f = lambda x : np.cos(x) + np.sin(x)
+f_der = lambda x : -np.sin(x) + np.cos(x)
+
+n_values = [4, 5, 10, 20]
+a, b = 0, 2*np.pi
+
+x_new = np.linspace(a, b, 500)
+
+plt.figure(figsize=(9, 4))
+
+for n in (n_values):
+    x_nodos = np.linspace(a, b, n)
+    y_nodos = f(x_nodos)
+    
+    poli_spCond = CubicSpline(x_nodos, y_nodos, bc_type=((1, f_der(a)), (1, f_der(b))))
+    y_sp = poli_spCond(x_new)
+    
+    plt.plot(x_new, y_sp, label=f"Spline n={n}")
+    plt.plot(x_nodos, y_nodos, 'o', label="Nodos")
+
+plt.title("Splines Cúbicos Condicionados f(x)= cos(x) + sin (x)")
+plt.xlabel ("x")
+plt.ylabel ("y")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+*Diferencia máxima entre la función y el spline en n=20 para cada una de las funciones*
+
+```{python}
+#| code-fold: true
+funcs = {
+    "f(x)=e^(2x)cos(3x)": lambda x: np.exp(2*x)*np.cos(3*x),
+    "f(x)=sen(log(x))": lambda x: np.sin(np.log(x)), 
+    "f(x)=e^(x)+e^(-x)": lambda x: np.exp(x)+np.exp(-x),
+    "f(x)=cos(x)+sen(x)": lambda x: np.cos(x)+np.sin(x)
+}
+
+derivs = {
+    "f(x)=e^(2x)cos(3x)": lambda x: -3*np.exp(2*x)*np.sin(3*x) + 2*np.cos(3*x)*np.exp(2*x),
+    "f(x)=sen(log(x))": lambda x: ((np.cos(np.log(x)))/(x)),
+    "f(x)=e^(x)+e^(-x)": lambda x: np.exp(x) - np.exp(-x),
+    "f(x)=cos(x)+sen(x)": lambda x: -np.sin(x) + np.cos(x)
+}
+
+intervals = {
+    "f(x)=e^(2x)cos(3x)": (0,2), 
+    "f(x)=sen(log(x))": (1, 10),
+    "f(x)=e^(x)+e^(-x)": (0,3), 
+    "f(x)=cos(x)+sen(x)": (0, 2*np.pi)
+}
+
+n_values = [4, 5, 10, 20]
+for key in funcs: 
+    f = funcs[key]
+    f_der = derivs[key]
+    a, b = intervals[key]
+    
+    print(f"La {key} en el intervalo [{a}, {b}]")
+    x_eval = np.linspace(a, b, 500)
+    f_eval = f(x_eval)
+    
+    for n in n_values:
+        x_nodos = np.linspace(a, b, n)
+        y_nodos = f(x_nodos)
+        poli_spCond = CubicSpline(x_nodos, y_nodos, bc_type=((1, f_der(a)), (1, f_der(b))))
+        poli_spCond_eval = poli_spCond(x_eval)
+        if n == 20: 
+            dif_max = np.max(np.abs(f_eval - poli_spCond_eval))
+            print(f"Diferencia máxima entre la función y el spline para n={n}: {dif_max:.6f}")
+```
+:::
