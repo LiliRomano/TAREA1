@@ -1,0 +1,83 @@
+---
+title: "Natalidad"
+author: "Lilian Romano García"
+date: "2025-05-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<span style="color:blue"> se cargan las librerias </span>
+
+```{r}
+library(forecast)    
+library(tseries)     
+library(ggplot2)     
+library(readxl)      
+library(dplyr)
+```
+
+
+<span style="color:blue"> se cargan los datos </span>
+```{r}
+datos <- read_excel("C:/Users/gamst/Escritorio/hola/natalidad.xlsx")  
+datos
+```
+
+
+<span style="color:blue"> Se renombran los datos para un mejor manejo </span>
+
+```{r}
+datos <- datos %>% 
+  rename(año = 1, nacimientos = 2)  
+```
+
+```{r}
+serie <- ts(datos$nacimientos, 
+            start = min(datos$año), 
+            end = max(datos$año), 
+            frequency = 1)  # Frecuencia 1 para datos anuales
+
+```
+
+
+<span style="color:blue"> Tabla de Natalidad </span>
+
+```{r}
+plot(serie, main = "Serie de Natalidad", xlab = "Año", ylab = "Nacimientos", col = "blue", lwd = 2)
+```
+
+
+<span style="color:Red"> Modelo </span>
+
+```{r}
+summary(modelo)
+
+```
+
+<span style="color:Red"> Predicciones </span>
+
+```{r}
+predicciones <- forecast(modelo, h = 5)
+```
+
+
+```{r}
+autoplot(predicciones) +
+  geom_line(data = data.frame(año = datos$año, nacimientos = datos$nacimientos), 
+            aes(x = año, y = nacimientos), color = "blue") +
+  labs(title = "Predicción de Natalidad (AR)", 
+       subtitle = paste("Modelo seleccionado:", modelo$arma[1], "AR,", modelo$arma[2], "MA"),
+       x = "Año", y = "Nacimientos") +
+  theme_minimal()
+```
+
+
+```{r}
+print(predicciones)
+```
+
+
+
