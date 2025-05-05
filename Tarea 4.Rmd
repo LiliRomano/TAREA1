@@ -1,0 +1,258 @@
+---
+title: "Tarea4"
+author: "Lilian Romano"
+date: "2025-05-04"
+output: html_document
+---
+
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.api as sm
+
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.arima.model import ARIMA
+
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+```
+
+
+```{python}
+# Configuración de estilo
+#plt.style.use('seaborn-v0_8')
+plt.style.use('seaborn-v0_8')
+sns.set_palette("Paired")
+plt.rcParams['figure.figsize'] = (12, 6)
+
+# Crear DataFrame con los datos del excel
+data = {
+    'año': range(1994, 2024),
+    'nacimientos': [
+        2904389, 2750444, 2707718, 2698425, 2668428, 2769089, 2798339, 2767610, 2699084,
+        2655894, 2625056, 2567906, 2505939, 2655083, 2636110, 2577214, 2643908, 2586287,
+        2498880, 2478889, 2463420, 2353596, 2293708, 2234039, 2162535, 2092214, 1629211,
+        1912178, 1891388, 1820888
+    ]
+}
+
+natalidad_df = pd.DataFrame(data)
+natalidad_df['fecha'] = pd.to_datetime(natalidad_df['año'], format='%Y')
+natalidad_ts = natalidad_df.set_index('fecha')['nacimientos']
+```
+
+
+```{python}
+# Función para mostrar información de la serie temporal
+def ts_info(series):
+    print(f"Rango temporal: {series.index.min().year} a {series.index.max().year}")
+    print(f"Número de observaciones: {len(series)}")
+    print("\nPrimeras observaciones:")
+    print(series.head())
+    print("\nÚltimas observaciones:")
+    print(series.tail())
+    
+ts_info(natalidad_ts)
+```
+
+```{python}
+# 1. Gráfica de la serie temporal original
+def plot_series(series, title="Serie Temporal de Natalidad"):
+    fig, ax = plt.subplots()
+    ax.plot(series.index, series, marker='o')
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel('Año')
+    ax.set_ylabel('Nacimientos')
+    ax.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+plot_series(natalidad_ts)
+
+# Versión interactiva con Plotly
+fig = px.line(natalidad_df, x='año', y='nacimientos', 
+              title='Evolución de Nacimientos (1994-2023)',
+              markers=True)
+fig.update_layout(xaxis_title='Año', yaxis_title='Nacimientos')
+fig.show()
+```
+
+
+
+```{python}
+# 2. Cambio porcentual anual
+natalidad_df['cambio_pct'] = natalidad_df['nacimientos'].pct_change() * 100
+
+fig, ax = plt.subplots()
+ax.bar(natalidad_df['año'], natalidad_df['cambio_pct'], 
+       color=np.where(natalidad_df['cambio_pct']>0, 'green', 'red'))
+ax.axhline(0, color='black', linestyle='--')
+ax.set_title('Cambio Porcentual Anual en Nacimientos', fontsize=16)
+ax.set_xlabel('Año')
+ax.set_ylabel('Cambio %')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+```
+
+::
+```{python}
+# 3. Boxplot por décadas
+natalidad_df['decada'] = (natalidad_df['año'] // 10) * 10
+
+fig, ax = plt.subplots()
+sns.boxplot(data=natalidad_df, x='decada', y='nacimientos', ax=ax)
+ax.set_title('Distribución de Nacimientos por Década', fontsize=16)
+ax.set_xlabel('Década')
+ax.set_ylabel('Nacimientos')
+plt.tight_layout()
+plt.show()
+```
+
+::
+```{python}
+# Estadísticas de la serie temporal
+print("\nResumen estadístico:")
+print(natalidad_ts.describe())
+```
+
+::
+```{python}
+# Prueba de estacionariedad (ADF)
+def test_stationarity(series):
+    result = adfuller(series)
+    print('\nPrueba de Dickey-Fuller Aumentada:')
+    print(f'ADF Statistic: {result[0]}')
+    print(f'p-value: {result[1]}')
+    print('Valores Críticos:')
+    for key, value in result[4].items():
+        print(f'\t{key}: {value}')
+        
+    if result[1] > 0.05:
+        print("\nLa serie NO es estacionaria (p-value > 0.05)")
+    else:
+        print("\nLa serie es estacionaria (p-value <= 0.05)")
+
+test_stationarity(natalidad_ts)
+```
+
+::
+```{python}
+# Diferenciación
+natalidad_diff = natalidad_ts.diff().dropna()
+plot_series(natalidad_diff, "Serie Diferenciada (Cambios Absolutos Anuales)")
+test_stationarity(natalidad_diff)
+```
+
+::
+```{python}
+# Autocorrelación
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+plot_acf(natalidad_ts, lags=15, ax=ax1)
+ax1.set_title('Función de Autocorrelación')
+plot_pacf(natalidad_ts, lags=15, ax=ax2)
+ax2.set_title('Función de Autocorrelación Parcial')
+plt.tight_layout()
+plt.show()
+
+# Descomposición de la serie (aunque es anual, sin estacionalidad)
+try:
+    decomposition = seasonal_decompose(natalidad_ts, model='additive', period=1)
+    
+    fig = decomposition.plot()
+    fig.suptitle('Descomposición de la Serie Temporal', y=1.02)
+    plt.tight_layout()
+    plt.show()
+except ValueError as e:
+    print("\nNo se puede descomponer series anuales sin estacionalidad:", e)
+```
+
+::
+```{python}
+# Modelado ARIMA
+# 1. Ajustar modelo ARIMA (orden determinado empíricamente)
+model = ARIMA(natalidad_ts, order=(1,1,1))
+results = model.fit()
+print("\nResumen del modelo ARIMA(1,1,1):")
+print(results.summary())
+
+# Gráfica de ajuste
+fig, ax = plt.subplots()
+ax.plot(natalidad_ts.index, natalidad_ts, label='Observado')
+ax.plot(natalidad_ts.index, results.fittedvalues, color='red', label='Ajustado')
+ax.set_title('Ajuste del Modelo ARIMA', fontsize=16)
+ax.set_xlabel('Año')
+ax.set_ylabel('Nacimientos')
+ax.legend()
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Gráfica de residuos
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+ax1.plot(results.resid)
+ax1.set_title('Residuos del Modelo')
+plot_acf(results.resid, lags=15, ax=ax2)
+plt.tight_layout()
+plt.show()
+```
+
+::
+```{python}
+# Pronóstico para los próximos 5 años
+forecast_steps = 5
+forecast = results.get_forecast(steps=forecast_steps)
+forecast_index = pd.date_range(start=natalidad_ts.index[-1] + pd.DateOffset(years=1), 
+                              periods=forecast_steps, freq='YS')
+
+# Gráfica del pronóstico
+fig, ax = plt.subplots()
+ax.plot(natalidad_ts.index, natalidad_ts, label='Observado')
+ax.plot(forecast_index, forecast.predicted_mean, color='green', label='Pronóstico')
+ax.fill_between(forecast_index,
+               forecast.conf_int()['lower nacimientos'],
+               forecast.conf_int()['upper nacimientos'],
+               color='green', alpha=0.1)
+ax.set_title(f'Pronóstico de Nacimientos para los próximos {forecast_steps} años', fontsize=16)
+ax.set_xlabel('Año')
+ax.set_ylabel('Nacimientos')
+ax.legend()
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Versión interactiva con Plotly
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=natalidad_ts.index, y=natalidad_ts, name='Observado'))
+fig.add_trace(go.Scatter(x=forecast_index, y=forecast.predicted_mean, 
+                         name='Pronóstico', line=dict(color='green')))
+fig.add_trace(go.Scatter(x=forecast_index.tolist(), 
+                         y=forecast.conf_int()['upper nacimientos'],
+                         line=dict(width=0), showlegend=False))
+fig.add_trace(go.Scatter(x=forecast_index.tolist(), 
+                         y=forecast.conf_int()['lower nacimientos'],
+                         fill='tonexty', line=dict(width=0),
+                         fillcolor='rgba(0,100,80,0.1)', name='Intervalo de confianza'))
+fig.update_layout(title=f'Pronóstico de Nacimientos para los próximos {forecast_steps} años',
+                 xaxis_title='Año', yaxis_title='Nacimientos')
+fig.show()
+
+# Mostrar valores del pronóstico
+print("\nPronóstico de nacimientos para los próximos años:")
+forecast_df = pd.DataFrame({
+    'Año': forecast_index.year,
+    'Nacimientos_pronosticados': forecast.predicted_mean.round(0),
+    'Limite_inferior': forecast.conf_int()['lower nacimientos'].round(0),
+    'Limite_superior': forecast.conf_int()['upper nacimientos'].round(0)
+})
+print(forecast_df)
+```
+
