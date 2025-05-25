@@ -1,0 +1,1642 @@
+---
+title: "Tarea 6. Ecuaciones diferenciales ordinarias."
+author: "Romano"
+format: 
+  html:
+    grid: 
+      body-width: 1000px
+editor: visual
+jupyter: python3
+---
+
+Packages requeridos:
+
+```{python}
+#| code-fold: true
+
+import numpy as np
+import matplotlib.pyplot as plt
+#Para instalar plotly hay que escribir en la terminal: py -m pip install plotly
+import plotly.graph_objects as go
+from scipy import integrate
+```
+
+# Ejercicio 1
+
+La Ley de Enfriamiento de Newton establece que la tasa de enfriamiento de un objeto es proporcional a la diferencia de temperatura entre el objeto y su entorno. Supongamos que $t$ es el tiempo, $T$ es la temperatura del objeto, y $T_s$ es la temperatura del entorno. La siguiente ecuación diferencial describe la Ley de Newton:
+
+$$
+\frac{dT}{dt} = k(T - T_s),
+$$
+
+donde $k$ es una constante.
+
+Consideramos una taza de café a 95 °C en una habitación de 18 °C. Se sabe que el café se enfría a una razón de 2 °C/min cuando su temperatura es de 70 °C. Calcula el valor de la constante $k$ y brinda una gráfica de la solución de la ecuación diferencial.
+
+A partir de los datos tenemos que la temperatura del entorno $T_s=18°C$, la cual es considerada constante. Además,
+
+$$
+\frac{dT}{dt} = 2°C/min\qquad \text{cuando} \qquad T=70°C
+$$ luego,
+
+$$
+k = \frac{1}{T-T_s}\frac{dT}{dt}= \frac{1}{70-18}\,2 = -\frac{1}{26}
+$$
+
+Por lo tanto, el problema con valor inicial cuya solución se aproximará es el siguiente:
+
+$$
+\frac{dT}{dt}=-\frac{1}{26}(T-18)\qquad T(0)=95°C
+$$
+
+A continuación se muestra tal aproximación para $t\in[0,200]$, donde se observa que aproximadamente a partir de $t=150$ se alcanza la temperatura de equilibrio (18°C)
+
+```{python}
+#| code-fold: true
+#| fig-align: 'center'
+
+f= lambda t,y: (-1/26)*(y-18)
+t0 = 0
+tf = 200
+t_values = np.linspace(t0, tf, 1000)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], [95], t_eval= t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label="Temperatura")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 2
+
+Brinda una aproximación de la solución del siguiente problema con valor inicial.
+
+$$
+y' = t -ty, \qquad y(1)=0.
+$$
+```{python}
+#| code-fold: true
+
+f= lambda t,y: t-t*y
+t1 = 0
+tf = 200
+t_values = np.linspace(t1, tf, 1000)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], [95], t_eval= t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label="Temperatura")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+
+# Ejercicio 3
+
+Para la siguiente ecuación diferencial ordinaria de segundo orden con valores iniciales
+
+$$
+u''-3u'-1.5 u= 8\,sen(3t), \qquad u(1)=-0.5, u'(1)=1
+$$
+
+Escribe el respectivo sistema de ecuaciones diferenciales de primer orden considerando que $v=u'(t)$ (velocidad) y posteriormente brinda la solución del sistema por medio de las funciones $u(t)$ y $v(t)$
+
+Para expresar la ecuación de segundo orden en un sistema de dos ecuaciones diferenciales de primer orden, consideramos la velocidad como $v(t)=u'(t)$, luego, $v'(t)=u''(t)$, al despejar $u''(t)$ y sustituyendo las igualdades descritas tenemos:
+
+$$
+v'(t)= u''(t)= 18\,sen(3t)-3u'-1.5u=18\,sen(3t)-3v-1.5u
+$$
+
+Luego, el sistema de ecuaciones diferenciales es,
+
+$$
+\begin{cases}
+u'  = v\\
+v'  = 18\,sen(3t)-3v-1.5u
+\end{cases}
+$$
+
+con las condiciones iniciales $u(1)=0.5$, $v(1)=1$
+
+```{python}
+#| code-fold: true
+
+def f(t, U):
+  u, v = U
+  return[v, 3*v+1.5*u +8*np.sin(3*t)]
+
+
+t0 = 1
+tf = 2
+s0 = np.array([-0.5, 1])
+t_values = np.linspace(t0, tf, 1000)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval= t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label="u(t)")
+plt.plot(t_values, edo_sol.y[1], label="v(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+<br>
+
+Para cada uno de las ecuaciones diferenciles ordinarias de segundo y tercer orden con valores iniciales de los ejercicios 4 al 18, encuentra el respectivo sistema de primer orden y aproxima la solución, brinda gráficas de cada una de las funciones que resulten del sistema.
+
+# Ejercicio 4
+
+**Oscilador armónico simple**
+
+$$
+y'' + 4y = 0,\quad y(0) = 1,\ y'(0) = 0
+$$
+
+```{python}
+#|code-fold: true
+
+h = 0.01  
+t_final = 5  
+t = np.arange(0, t_final + h, h)  
+
+y1_0 = 1  
+y2_0 = 0  
+
+y1 = np.zeros(len(t))
+y2 = np.zeros(len(t))
+y1[0] = y1_0
+y2[0] = y2_0
+
+for i in range(1, len(t)):
+    y1[i] = y1[i-1] + h * y2[i-1]  # y1' = y2
+    y2[i] = y2[i-1] + h * (-4 * y1[i-1])  # y2' = -4*y1
+
+y_exact = np.cos(2 * t)
+y_prime_exact = -2 * np.sin(2 * t)
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, label='Aproximación (y1)', linestyle='--', color='blue')
+plt.plot(t, y_exact, label='Solución exacta (cos(2t))', linestyle='-', color='red')
+plt.xlabel('t')
+plt.ylabel('y(t)')
+plt.title('Solución y(t)')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(t, y2, label='Aproximación (y2)', linestyle='--', color='green')
+plt.plot(t, y_prime_exact, label="Solución exacta (-2sin(2t))", linestyle='-', color='orange')
+plt.xlabel('t')
+plt.ylabel("y'(t)")
+plt.title("Derivada y'(t)")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 5
+
+**Oscilador amortiguado**
+
+$$
+y'' + 0.5y' + 4y = 0,\quad y(0) = 2,\ y'(0) = 0
+$$
+```{python}
+#|code-fold: true
+
+def sistema_edo(y1, y2):
+    dy1dt = y2          
+    dy2dt = -4 * y1     
+    return dy1dt, dy2dt
+
+t0 = 0                  
+tf = 5                 
+h = 0.01                
+N = int((tf - t0) / h)  
+
+y1_0 = 1              
+y2_0 = 0              
+
+t = np.linspace(t0, tf, N+1)  
+y1 = np.zeros(N+1)            
+y2 = np.zeros(N+1)            
+y1[0] = y1_0
+y2[0] = y2_0
+
+for i in range(N):
+    dy1dt, dy2dt = sistema_edo(y1[i], y2[i])
+    y1[i+1] = y1[i] + h * dy1dt
+    y2[i+1] = y2[i] + h * dy2dt
+
+y_exacta = np.cos(2 * t)            
+y_derivada_exacta = -2 * np.sin(2 * t)  
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b--', label='Aproximación (Euler)')
+plt.plot(t, y_exacta, 'r-', label='Solución exacta: cos(2t)')
+plt.xlabel('Tiempo (t)')
+plt.ylabel('y(t)')
+plt.title('Solución de y(t)')
+plt.legend()
+plt.grid()
+
+# Gráfica de y'(t)
+plt.subplot(1, 2, 2)
+plt.plot(t, y2, 'g--', label="Aproximación (Euler)")
+plt.plot(t, y_derivada_exacta, 'm-', label="Solución exacta: -2sin(2t)")
+plt.xlabel('Tiempo (t)')
+plt.ylabel("y'(t)")
+plt.title("Derivada y'(t)")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 6
+
+**Oscilador forzado**
+
+$$
+y'' + 2y' + y = \cos(t),\quad y(0) = 0,\ y'(0) = 1
+$$
+```{python}
+#|code-fold: true
+
+def sistema_edo(t, y1, y2):
+    dy1dt = y2
+    dy2dt = -2 * y2 - y1 + np.cos(t)
+    return dy1dt, dy2dt
+
+t0 = 0           
+tf = 20          
+h = 0.01         
+N = int((tf - t0) / h) 
+
+y1_0 = 0        
+y2_0 = 1         
+
+t = np.linspace(t0, tf, N+1)
+y1 = np.zeros(N+1) 
+y2 = np.zeros(N+1) 
+y1[0] = y1_0
+y2[0] = y2_0
+
+for i in range(N):
+    k1_y1, k1_y2 = sistema_edo(t[i], y1[i], y2[i])
+    k2_y1, k2_y2 = sistema_edo(t[i] + h/2, y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2)
+    k3_y1, k3_y2 = sistema_edo(t[i] + h/2, y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2)
+    k4_y1, k4_y2 = sistema_edo(t[i] + h, y1[i] + h * k3_y1, y2[i] + h * k3_y2)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+
+# Solución exacta
+y_exacta = np.exp(-t) * (t + 0.5 * np.sin(t))
+
+# Gráficas
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b--', label='Aproximación (RK4)', linewidth=1.5)
+plt.plot(t, y_exacta, 'r-', label='Solución exacta', linewidth=1)
+plt.xlabel('Tiempo (t)')
+plt.ylabel('y(t)')
+plt.title('Solución del oscilador forzado')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(y1, y2, 'g-', label='Espacio de fases (RK4)')
+plt.xlabel('y(t)')
+plt.ylabel("y'(t)")
+plt.title('Diagrama de fase')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+
+# Ejercicio 7
+
+**Ecuación no lineal de segundo orden**
+
+$$
+y'' = -y^3 + \cos(t),\quad y(0) = 0,\ y'(0) = 0
+$$
+```{python}
+#|code-fold: true
+
+def sistema(t, Y):
+    y1, y2 = Y
+    dy1dt = y2
+    dy2dt = -y1**3 + np.cos(t)
+    return [dy1dt, dy2dt]
+
+y2_0 = 0
+Y0 = [y1_0, y2_0]
+
+t0 = 0
+tf = 10  
+t_eval = np.linspace(t0, tf, 300)  
+
+sol = solve_ivp(sistema, [t0, tf], Y0, t_eval=t_eval, method='RK45')
+
+t = sol.t
+y1 = sol.y[0]
+y2 = sol.y[1]  
+
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, label='y(t)', color='indigo')
+plt.title('Solución y(t)')
+plt.xlabel('t')
+plt.ylabel('y')
+plt.grid()
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(t, y2, label="y'(t)", color='pink')
+plt.title("Derivada y'(t)")
+plt.xlabel('t')
+plt.ylabel("y'")
+plt.grid()
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 8
+
+**Amortiguamiento cuadrático**
+
+$$
+y'' + y'^2 + y = 0,\quad y(0) = 1,\ y'(0) = -1
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_edo(y1, y2):
+    dy1dt = y2
+    dy2dt = -y2**2 - y1  
+    return dy1dt, dy2dt
+
+t0 = 0           
+tf = 10          
+h = 0.01         
+N = int((tf - t0) / h)  
+
+y1_0 = 1         
+y2_0 = -1        
+
+t = np.linspace(t0, tf, N+1)
+y1 = np.zeros(N+1)  
+y2 = np.zeros(N+1)  
+y1[0] = y1_0
+y2[0] = y2_0
+
+for i in range(N):
+    k1_y1, k1_y2 = sistema_edo(y1[i], y2[i])
+    k2_y1, k2_y2 = sistema_edo(y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2)
+    k3_y1, k3_y2 = sistema_edo(y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2)
+    k4_y1, k4_y2 = sistema_edo(y1[i] + h * k3_y1, y2[i] + h * k3_y2)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b-', label='Solución y(t)')
+plt.xlabel('Tiempo (t)')
+plt.ylabel('y(t)')
+plt.title('Amortiguamiento cuadrático: y(t)')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(y1, y2, 'r-', label='Espacio de fases')
+plt.xlabel('y(t)')
+plt.ylabel("y'(t)")
+plt.title('Diagrama de fase')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 9
+
+**Péndulo simple (no lineal)**
+
+$$
+\theta'' + \sin(\theta) = 0,\quad \theta(0) = \frac{\pi}{4},\ \theta'(0) = 0
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_pendulo(theta1, theta2):
+    dtheta1_dt = theta2
+    dtheta2_dt = -np.sin(theta1) 
+    return dtheta1_dt, dtheta2_dt
+
+t0 = 0              
+tf = 20             
+h = 0.01            
+N = int((tf - t0) / h)  
+
+theta1_0 = np.pi/4  
+theta2_0 = 0    
+
+t = np.linspace(t0, tf, N+1)
+theta1 = np.zeros(N+1)  # θ(t)
+theta2 = np.zeros(N+1)  # θ'(t)
+theta1[0] = theta1_0
+theta2[0] = theta2_0
+
+for i in range(N):
+    k1_theta1, k1_theta2 = sistema_pendulo(theta1[i], theta2[i])
+    k2_theta1, k2_theta2 = sistema_pendulo(theta1[i] + h/2 * k1_theta1, theta2[i] + h/2 * k1_theta2)
+    k3_theta1, k3_theta2 = sistema_pendulo(theta1[i] + h/2 * k2_theta1, theta2[i] + h/2 * k2_theta2)
+    k4_theta1, k4_theta2 = sistema_pendulo(theta1[i] + h * k3_theta1, theta2[i] + h * k3_theta2)
+    
+    theta1[i+1] = theta1[i] + h/6 * (k1_theta1 + 2*k2_theta1 + 2*k3_theta1 + k4_theta1)
+    theta2[i+1] = theta2[i] + h/6 * (k1_theta2 + 2*k2_theta2 + 2*k3_theta2 + k4_theta2)
+
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, theta1, 'b-', label='θ(t) (rad)')
+plt.xlabel('Tiempo (s)')
+plt.ylabel('Ángulo θ(t) (rad)')
+plt.title('Posición angular del péndulo')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(theta1, theta2, 'r-', label='Espacio de fases')
+plt.xlabel('θ(t) (rad)')
+plt.ylabel('Velocidad angular θ\'(t) (rad/s)')
+plt.title('Diagrama de fase del péndulo')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 10
+
+**Circuito RLC**
+
+$$
+LQ'' + RQ' + \frac{1}{C}Q = V(t),\quad Q(0) = 0,\ Q'(0) = 0,\quad V(t) = \sin(t)
+$$
+
+Consideramos la corriente como la derivada de la carga, es decir $I(t)=Q'(t)$, por lo tanto $I'(t)=Q''(t)$, al despejar la segunda derivada de la carga de la ecuación diferencial de segundo orden y al llevar las sustituciones descritas se obtiene el siguiente sistema de primer orden,
+
+$$
+\begin{cases}
+Q' = I\\
+I' = \frac{1}{L} \left( sen(t) - R\, I-\frac{Q}{C} \right)
+\end{cases}
+$$
+
+con las condiciones iniciales $Q(0)=0, I(0)=0$.
+
+```{python}
+#| code-fold: true
+
+def f(t, Q, L, R, C):
+  q, i = Q
+  return[i, (1/L)*(np.sin(t)-R*i-q/C)]
+
+
+t0 = 0
+tf = 50
+s0 = np.array([0, 0])
+t_values = np.linspace(t0, tf, 10000)
+
+L = 0.5
+R = 2
+C = 5
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval= t_values, args = (L, R, C))
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label="Q(t)")
+plt.plot(t_values, edo_sol.y[1], label="I(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+Trayectoria
+
+```{python}
+#| code-fold: true
+
+plt.figure(figsize=(8,6))
+plt.plot(edo_sol.y[0], edo_sol.y[1], label="Trayectoria")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 11
+
+**Ecuación de Bessel aproximada**
+
+$$
+x^2y'' + xy' + (x^2 - 1)y = 0,\quad y(1) = 0.5,\ y'(1) = -0.1
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_bessel(x, y1, y2):
+    dy1dx = y2
+    dy2dx = - (1/x) * y2 - (1 - 1/x**2) * y1
+    return dy1dx, dy2dx
+
+x0 = 1.0           
+xf = 10.0          
+h = 0.01           
+N = int((xf - x0) / h)  
+
+y1_0 = 0.5         
+y2_0 = -0.1        
+
+
+x = np.linspace(x0, xf, N+1)
+y1 = np.zeros(N+1)  
+y2 = np.zeros(N+1)  
+y1[0] = y1_0
+y2[0] = y2_0
+
+
+for i in range(N):
+    k1_y1, k1_y2 = sistema_bessel(x[i], y1[i], y2[i])
+    k2_y1, k2_y2 = sistema_bessel(x[i] + h/2, y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2)
+    k3_y1, k3_y2 = sistema_bessel(x[i] + h/2, y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2)
+    k4_y1, k4_y2 = sistema_bessel(x[i] + h, y1[i] + h * k3_y1, y2[i] + h * k3_y2)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(x, y1, 'b-', label='Solución y(x)')
+plt.xlabel('x')
+plt.ylabel('y(x)')
+plt.title('Solución de la Ecuación de Bessel Modificada')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(x, y2, 'r-', label="Derivada y'(x)")
+plt.xlabel('x')
+plt.ylabel("y'(x)")
+plt.title('Derivada de la Solución')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 12
+
+**No lineal con exponencial**
+
+$$
+y'' + y e^y = \sin(t),\quad y(0) = 0,\ y'(0) = 1
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_no_lineal(t, y1, y2):
+    dy1dt = y2
+    dy2dt = -y1 * np.exp(y1) + np.sin(t)  # y'' = -y e^y + sin(t)
+    return dy1dt, dy2dt
+
+t0 = 0.0           
+tf = 10.0          
+h = 0.01          
+N = int((tf - t0) / h)  
+
+y1_0 = 0.0         
+y2_0 = 1.0         
+
+t = np.linspace(t0, tf, N+1)
+y1 = np.zeros(N+1)  # y(t)
+y2 = np.zeros(N+1)  # y'(t)
+y1[0] = y1_0
+y2[0] = y2_0
+
+for i in range(N):
+    k1_y1, k1_y2 = sistema_no_lineal(t[i], y1[i], y2[i])
+    k2_y1, k2_y2 = sistema_no_lineal(t[i] + h/2, y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2)
+    k3_y1, k3_y2 = sistema_no_lineal(t[i] + h/2, y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2)
+    k4_y1, k4_y2 = sistema_no_lineal(t[i] + h, y1[i] + h * k3_y1, y2[i] + h * k3_y2)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b-', label='Solución y(t)')
+plt.xlabel('Tiempo (t)')
+plt.ylabel('y(t)')
+plt.title('Solución de la Ecuación No Lineal')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(y1, y2, 'r-', label='Espacio de fases')
+plt.xlabel('y(t)')
+plt.ylabel("y'(t)")
+plt.title('Diagrama de Fase')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 13
+
+**Cuerda con fuerza externa**
+
+$$
+y'' = -\pi^2 y + \cos(2\pi t),\quad y(0) = 1,\ y'(0) = 0
+$$
+```{python}
+def sistema(t, y):
+    y1, y2 = y
+    dy1dt = y2
+    dy2dt = - (np.pi**2) * y1 + np.cos(2 * np.pi * t)
+    return [dy1dt, dy2dt]
+
+y0 = [1, 0]  
+t_span = (0, 2)  
+t_eval = np.linspace(t_span[0], t_span[1], 500)
+
+sol = solve_ivp(sistema, t_span, y0, t_eval=t_eval)
+
+plt.figure(figsize=(10, 6))
+plt.plot(sol.t, sol.y[0], label=r'$y(t)$ - posición')
+plt.plot(sol.t, sol.y[1], label=r"$y'(t)$ - velocidad")
+plt.title(r'Solución aproximada del sistema de primer orden para $y\'\' = -\pi^2 y + \cos(2\pi t)$')
+plt.xlabel('Tiempo $t$')
+plt.ylabel('Funciones')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+```
+
+
+# Ejercicio 14
+
+**EDO homogénea de tercer orden**
+
+$$
+y''' - 3y'' + 3y' - y = 0,\quad y(0) = 1,\ y'(0) = 0,\ y''(0) = 1
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_tercer_orden(y1, y2, y3):
+    dy1dt = y2
+    dy2dt = y3
+    dy3dt = 3 * y3 - 3 * y2 + y1  
+    return dy1dt, dy2dt, dy3dt
+
+t0 = 0.0           
+tf = 5.0           
+h = 0.01          
+N = int((tf - t0) / h)  
+
+y1_0 = 1.0        
+y2_0 = 0.0         
+y3_0 = 1.0         
+
+t = np.linspace(t0, tf, N+1)
+y1 = np.zeros(N+1) 
+y2 = np.zeros(N+1)  
+y3 = np.zeros(N+1)  
+y1[0] = y1_0
+y2[0] = y2_0
+y3[0] = y3_0
+
+for i in range(N):
+    k1_y1, k1_y2, k1_y3 = sistema_tercer_orden(y1[i], y2[i], y3[i])
+    k2_y1, k2_y2, k2_y3 = sistema_tercer_orden(y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2, y3[i] + h/2 * k1_y3)
+    k3_y1, k3_y2, k3_y3 = sistema_tercer_orden(y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2, y3[i] + h/2 * k2_y3)
+    k4_y1, k4_y2, k4_y3 = sistema_tercer_orden(y1[i] + h * k3_y1, y2[i] + h * k3_y2, y3[i] + h * k3_y3)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+    y3[i+1] = y3[i] + h/6 * (k1_y3 + 2*k2_y3 + 2*k3_y3 + k4_y3)
+
+y_analitica = (1 - t + t**2/2) * np.exp(t)
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b-', label='Solución numérica (RK4)')
+plt.plot(t, y_analitica, 'r--', label='Solución analítica')
+plt.xlabel('Tiempo (t)')
+plt.ylabel('y(t)')
+plt.title('Solución de la EDO de tercer orden')
+plt.legend()
+plt.grid()
+
+
+plt.subplot(1, 2, 2)
+plt.plot(t, y2, 'g-', label="y'(t)")
+plt.plot(t, y3, 'm-', label="y''(t)")
+plt.xlabel('Tiempo (t)')
+plt.ylabel('Derivadas')
+plt.title('Derivadas de la solución')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 15
+
+**EDO de tercer orden con término no lineal**
+
+$$
+y''' + y^2 = 0,\quad y(0) = 1,\ y'(0) = 0,\ y''(0) = 0
+$$
+
+```{python}
+def f(t, U): u1, u2, u3 = U
+  return[u2, u3, -u1**2]
+
+t0 = 0
+tf = 10
+s0 = np.array([1, 0, 0])
+
+t_values = np.linspace(t0, tf, 1000)
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0)
+
+plt.figure(figsize=(8,6))
+plt.plot(edo_sol.t, edo_sol.y[0], label ="y(t)")
+plt.plot(edo_sol.t, edo_sol.y[1], label ="y'(t)")
+plt.plot(edo_sol.t, edo_sol.y[2], label ="y''(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+
+# Ejercicio 16
+
+**Oscilador cúbico forzado**
+
+$$
+y''' + y'' + y^3 = \cos(t),\quad y(0) = 0,\ y'(0) = 1,\ y''(0) = 0
+$$
+
+```{python}
+#|code-fold: true
+
+def f(t, U):
+  u1, u2, u3 = U
+  return[u2, u3, np.cos(t)-u3 -u1 ** 3]
+
+
+t0 = 0
+tf = 5
+s0 = np.array([0, 1, 0])
+t_values = np.linspace(t0, tf, 1000)
+
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label ="y(t)")
+plt.plot(t_values, edo_sol.y[1], label ="y'(t)")
+plt.plot(t_values, edo_sol.y[2], label ="y''(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 17
+
+**Ecuación tipo dispersión (Korteweg-de Vries simplificada)**
+
+$$
+y''' - 6yy' = 0,\quad y(0) = 2,\ y'(0) = 0,\ y''(0) = -1
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_kdv(y1, y2, y3):
+    dy1dt = y2
+    dy2dt = y3
+    dy3dt = 6 * y1 * y2  # y''' = 6y y'
+    return dy1dt, dy2dt, dy3dt
+
+t0 = 0.0          
+tf = 5.0           
+h = 0.01           
+N = int((tf - t0) / h)  
+
+y1_0 = 2.0         
+y2_0 = 0.0         
+y3_0 = -1.0       
+
+t = np.linspace(t0, tf, N+1)
+y1 = np.zeros(N+1)  
+y2 = np.zeros(N+1)  
+y3 = np.zeros(N+1)  
+y1[0] = y1_0
+y2[0] = y2_0
+y3[0] = y3_0
+
+for i in range(N):
+    k1_y1, k1_y2, k1_y3 = sistema_kdv(y1[i], y2[i], y3[i])
+    k2_y1, k2_y2, k2_y3 = sistema_kdv(y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2, y3[i] + h/2 * k1_y3)
+    k3_y1, k3_y2, k3_y3 = sistema_kdv(y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2, y3[i] + h/2 * k2_y3)
+    k4_y1, k4_y2, k4_y3 = sistema_kdv(y1[i] + h * k3_y1, y2[i] + h * k3_y2, y3[i] + h * k3_y3)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+    y3[i+1] = y3[i] + h/6 * (k1_y3 + 2*k2_y3 + 2*k3_y3 + k4_y3)
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b-', label='Solución y(t)')
+plt.xlabel('Tiempo (t)')
+plt.ylabel('y(t)')
+plt.title('Solución de la Ecuación KdV Simplificada')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(t, y2, 'g-', label="y'(t)")
+plt.plot(t, y3, 'r-', label="y''(t)")
+plt.xlabel('Tiempo (t)')
+plt.ylabel('Derivadas')
+plt.title('Derivadas de la solución')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 18
+
+**Modelo no lineal de conducción**
+
+$$
+y''' = -y y'' + y',\quad y(0) = 1,\ y'(0) = 0,\ y''(0) = -1
+$$
+
+```{python}
+#|code-fold: true
+
+def modelo_conduccion(y1, y2, y3):
+    dy1dt = y2
+    dy2dt = y3
+    dy3dt = -y1 * y3 + y2 
+    return dy1dt, dy2dt, dy3dt
+
+t0 = 0.0           
+tf = 10.0          
+h = 0.01           
+N = int((tf - t0) / h)  
+y1_0 = 1.0        
+y2_0 = 0.0         
+y3_0 = -1.0        
+
+t = np.linspace(t0, tf, N+1)
+y1 = np.zeros(N+1)
+y2 = np.zeros(N+1)  
+y3 = np.zeros(N+1)  
+y1[0] = y1_0
+y2[0] = y2_0
+y3[0] = y3_0
+
+for i in range(N):
+    k1_y1, k1_y2, k1_y3 = modelo_conduccion(y1[i], y2[i], y3[i])
+    k2_y1, k2_y2, k2_y3 = modelo_conduccion(y1[i] + h/2 * k1_y1, y2[i] + h/2 * k1_y2, y3[i] + h/2 * k1_y3)
+    k3_y1, k3_y2, k3_y3 = modelo_conduccion(y1[i] + h/2 * k2_y1, y2[i] + h/2 * k2_y2, y3[i] + h/2 * k2_y3)
+    k4_y1, k4_y2, k4_y3 = modelo_conduccion(y1[i] + h * k3_y1, y2[i] + h * k3_y2, y3[i] + h * k3_y3)
+    
+    y1[i+1] = y1[i] + h/6 * (k1_y1 + 2*k2_y1 + 2*k3_y1 + k4_y1)
+    y2[i+1] = y2[i] + h/6 * (k1_y2 + 2*k2_y2 + 2*k3_y2 + k4_y2)
+    y3[i+1] = y3[i] + h/6 * (k1_y3 + 2*k2_y3 + 2*k3_y3 + k4_y3)
+
+plt.figure(figsize=(14, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b-', label='$y(t)$')
+plt.plot(t, y2, 'g-', label="$y'(t)$")
+plt.plot(t, y3, 'r-', label="$y''(t)$")
+plt.xlabel('Tiempo ($t$)')
+plt.ylabel('Valores')
+plt.title('Solución y derivadas del modelo no lineal')
+plt.legend()
+plt.grid()
+
+ax = plt.subplot(1, 2, 2, projection='3d')
+ax.plot(y1, y2, y3, 'm-', linewidth=1)
+ax.set_xlabel('$y(t)$')
+ax.set_ylabel("$y'(t)$")
+ax.set_zlabel("$y''(t)$")
+ax.set_title('Espacio de fases tridimensional')
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 19
+
+Una persona abre una cuenta bancaria con un saldo inicial de $2000$ dólares. Sea $b(t)$ el saldo en la cuenta en el tiempo t. Así, $b(0) = 2000$. El banco paga intereses a una tasa continua del $5\%$ anual. La persona realiza depósitos en la cuenta a una tasa continua de $s(t)$ dólares por año. Supogamos que $s(0) = 500$ y que $s(t)$ está aumentando a una tasa continua del $4\%$ anual (la persona puede ahorrar más conforme aumenta su ingreso con el tiempo). Brinda el sistema de ecuaciones diferenciales ordinarias y gráfica la solución $b(t)$ y $s(t)$.
+
+```{python}
+#| code-fold: true
+
+def f(t, X):
+  x, y = X
+  return[0.05*x+y, 0.04*y]
+
+
+t0 = 0
+tf = 5
+s0 = np.array([2000, 500])
+t_values = np.linspace(t0, tf, 1000)
+
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label ="b(t)")
+plt.plot(t_values, edo_sol.y[1], label ="s(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 20
+
+Aproxima la solución del siguiente sistema de ecuaciones diferenciales ordinarias
+
+\begin{eqnarray}
+x'(t) & = -6 x - 3 y\\
+y'(t) & = -15 x + 6y
+\end{eqnarray}
+
+donde $x(0)= 3$ y $y(0)=2$. Grafica cada una de las funciones y la trayectoria.
+
+```{python}
+#| code-fold: true
+
+def f(t, X):
+  x, y = X
+  return[-6*x - 3*y, -15*x + 6*y]
+
+t0 = 0
+tf = 5
+s0 = np.array([3, 2])
+
+t_values = np.linspace(t0, tf, 1000)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(edo_sol.t, edo_sol.y[0], label ="x(t)")
+plt.plot(edo_sol.t, edo_sol.y[1], label ="y(t)")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+
+# Ejercicio 21
+
+Considera la interacción de dos especies de animales en un hábitat. Considerando que las poblaciones $x(t)$ y $y(t)$ pueden ser modeladas por medio de las ecuaciones
+
+\begin{eqnarray}
+x'(t) & = 1.4 x - y\\
+y'(t) & = -1.25 x + 3.4y
+\end{eqnarray}
+
+donde $x(0)=7$ y $y(0)=3$. Grafica cada una de las funciones que brindan la población de cada especie al tiempo $t$.
+
+```{python}
+#|code-fold: true
+
+def modelo_especies(t, z):
+    x, y = z
+    dxdt = 1.4 * x - y
+    dydt = -1.25 * x + 3.4 * y
+    return [dxdt, dydt]
+
+t0 = 0
+tf = 10
+x0 = 7
+y0 = 3
+t_span = (t0, tf)
+t_eval = np.linspace(t0, tf, 500)  
+
+sol = solve_ivp(modelo_especies, t_span, [x0, y0], t_eval=t_eval, method='RK45')
+
+x = sol.y[0]
+y = sol.y[1]
+t = sol.t
+
+plt.figure(figsize=(12, 6))
+
+plt.plot(t, x, 'b-', label='Población $x(t)$ (Especie 1)')
+plt.plot(t, y, 'r-', label='Población $y(t)$ (Especie 2)')
+plt.xlabel('Tiempo ($t$)')
+plt.ylabel('Población')
+plt.title('Dinámica de Poblaciones de Dos Especies')
+plt.legend()
+plt.grid()
+
+plt.figure(figsize=(8, 6))
+plt.plot(x, y, 'g-', label='Trayectoria en el espacio de fases')
+plt.xlabel('Población $x(t)$')
+plt.ylabel('Población $y(t)$')
+plt.title('Diagrama de Fase: $x(t)$ vs $y(t)$')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 22
+
+Aproxima la solución del siguiente sistema de ecuaciones diferenciales ordinarias,
+
+\begin{eqnarray}
+y'_1(t) & = -6.2 +1.1 y_1 - 0.8 y_2\\
+y'_2(t) & = -13.8 +2.1 y_1 -1.2 y_2
+\end{eqnarray}
+
+con los valores iniciales $y_1(0)=11$, $y_2(0)=4$. Grafica cada una de las funciones y la trayectoria.
+
+<br>
+
+Para cada uno de los sistemas de ecuaciones diferenciales ordinarias no lineales con valor inicial grafica las funciones y las respectivas trayectorias.
+
+```{python}
+#|code-fold: true
+
+def sistema_edos(t, y):
+    y1, y2 = y
+    dy1dt = -6.2 + 1.1 * y1 - 0.8 * y2
+    dy2dt = -13.8 + 2.1 * y1 - 1.2 * y2
+    return [dy1dt, dy2dt]
+
+t0 = 0
+tf = 10
+y0 = [11, 4]
+t_span = (t0, tf)
+t_eval = np.linspace(t0, tf, 500) 
+
+sol = solve_ivp(sistema_edos, t_span, y0, t_eval=t_eval, method='RK45')
+
+y1 = sol.y[0]
+y2 = sol.y[1]
+t = sol.t
+
+plt.figure(figsize=(14, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, y1, 'b-', label='$y_1(t)$')
+plt.plot(t, y2, 'r-', label='$y_2(t)$')
+plt.xlabel('Tiempo ($t$)')
+plt.ylabel('Valores de $y_1(t)$ y $y_2(t)$')
+plt.title('Soluciones del Sistema de EDOs')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(y1, y2, 'g-', label='Trayectoria')
+plt.xlabel('$y_1(t)$')
+plt.ylabel('$y_2(t)$')
+plt.title('Trayectoria en el Espacio de Fases')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 23
+
+**Sistema logístico con depredación**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = x(1 - x) - xy \\
+\frac{dy}{dt} = -y + xy \\
+x(0) = 0.9,\quad y(0) = 0.1
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+
+def f(t, X):
+  x, y = X
+  return[x*(1 - x) - x*y, -y +x*y]
+
+t0 = 0
+tf = 1000
+s0 = np.array([0.9, 0.1])
+t_values = np.linspace(t0, tf, 1000)
+
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label ="x(t)")
+plt.plot(t_values, edo_sol.y[1], label ="y(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 24
+
+**Oscilador de Van der Pol**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = y \\
+\frac{dy}{dt} = \mu (1 - x^2)y - x \\
+x(0) = 2,\quad y(0) = 0,\quad \mu = 3
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+
+def f(t, X, mu):
+  x, y = X
+  return[y, mu* (1 - x**2)*y - x]
+
+
+mu = 3
+t0 = 0
+tf = 30
+s0 = np.array([2, 0])
+t_values = np.linspace(t0, tf, 5000)
+
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values, args= (mu,))
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label ="x(t)")
+plt.plot(t_values, edo_sol.y[1], label ="y(t)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+Órbita
+
+```{python}
+#|code-fold: true
+
+val_mu = np.linspace(1, 10, 5)
+
+plt.figure(figsize=(8,6))
+for mu in val_mu:
+  edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values, args= (mu,))
+  plt.plot(edo_sol.y[0], edo_sol.y[1], label = "mu= " + str(mu))
+  
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 25
+
+**Sistema de Lotka-Volterra**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = \alpha x - \beta xy \\
+\frac{dy}{dt} = \delta xy - \gamma y \\
+x(0) = 10,\quad y(0) = 5,\quad \alpha = 1.5,\ \beta = 1,\ \delta = 1,\ \gamma = 3
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+
+def f(t, X, alpha, beta, delta, gamma):
+  x, y = X
+  return[alpha*x - beta*x*y, delta*x*y-gamma*y]
+
+alpha = 1.5
+beta = 1
+delta = 1
+gamma = 3
+t0 = 0
+tf = 30
+s0 = np.array([10, 5])
+t_values = np.linspace(t0, tf, 1000)
+
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values, args = (alpha, beta, delta, gamma))
+
+plt.figure(figsize=(8,6))
+plt.plot(t_values, edo_sol.y[0], label ="x(t) = Presas")
+plt.plot(t_values, edo_sol.y[1], label ="y(t) = Depredador")
+plt.grid()
+plt.legend()
+plt.show()
+
+```
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(edo_sol.y[0], edo_sol.y[1], label ="Orbita")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+# Ejercicio 26
+
+**Interacción no lineal seno-coseno**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = \sin(y) - x^3 \\
+\frac{dy}{dt} = \cos(x) - y^2 \\
+x(0) = 1,\quad y(0) = 0
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+
+def sistema_seno_coseno(t, z):
+    x, y = z
+    dxdt = np.sin(y) - x**3
+    dydt = np.cos(x) - y**2
+    return [dxdt, dydt]
+
+x0 = 1.0
+y0 = 0.0
+t0 = 0
+tf = 10
+t_span = (t0, tf)
+t_eval = np.linspace(t0, tf, 1000)
+
+sol = solve_ivp(sistema_seno_coseno, t_span, [x0, y0], t_eval=t_eval, method='RK45')
+
+x = sol.y[0]
+y = sol.y[1]
+t = sol.t
+
+plt.figure(figsize=(14, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, x, 'b-', label='$x(t)$')
+plt.plot(t, y, 'r-', label='$y(t)$')
+plt.xlabel('Tiempo ($t$)')
+plt.ylabel('Valores de $x(t)$ y $y(t)$')
+plt.title('Soluciones del Sistema No Lineal')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(x, y, 'g-', label='Trayectoria')
+plt.xlabel('$x(t)$')
+plt.ylabel('$y(t)$')
+plt.title('Espacio de Fases: $x(t)$ vs $y(t)$')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+```
+
+
+# Ejercicio 27
+
+**FitzHugh-Nagumo (modelo de neurona)**
+
+$$
+\begin{cases}
+\frac{dv}{dt} = v - \frac{v^3}{3} - w + I \\
+\frac{dw}{dt} = 0.08(v + 0.7 - 0.8w) \\
+v(0) = -1,\quad w(0) = 1,\quad I = 0.5
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+I = 0.5  
+
+def fitzhugh_nagumo(t, z):
+    v, w = z
+    dvdt = v - (v**3)/3 - w + I
+    dwdt = 0.08 * (v + 0.7 - 0.8 * w)
+    return [dvdt, dwdt]
+
+v0 = -1.0
+w0 = 1.0
+t0 = 0
+tf = 100
+t_span = (t0, tf)
+t_eval = np.linspace(t0, tf, 10000) 
+
+sol = solve_ivp(fitzhugh_nagumo, t_span, [v0, w0], t_eval=t_eval, method='RK45')
+
+v = sol.y[0]
+w = sol.y[1]
+t = sol.t
+
+plt.figure(figsize=(15, 7))
+
+plt.subplot(1, 2, 1)
+plt.plot(t, v, 'b-', label='Potencial $v(t)$')
+plt.plot(t, w, 'r-', label='Variable de recuperación $w(t)$')
+plt.xlabel('Tiempo ($t$)')
+plt.ylabel('$v(t)$, $w(t)$')
+plt.title('Modelo FitzHugh-Nagumo: Dinámica Temporal')
+plt.legend()
+plt.grid()
+
+plt.subplot(1, 2, 2)
+plt.plot(v, w, 'g-', label='Trayectoria')
+plt.xlabel('Potencial $v(t)$')
+plt.ylabel('Variable $w(t)$')
+plt.title('Espacio de Fases: $v(t)$ vs $w(t)$')
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+```
+
+
+# Ejercicio 28
+
+**Sistema no autónomo**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = x \sin(t) + y^2 \\
+\frac{dy}{dt} = -y \cos(t) + x \\
+x(0) = 1,\quad y(0) = -1
+\end{cases}
+$$
+```{python}
+#|code-fold: true
+
+def f(t, X):
+  x, y = X
+  return[x*np.sin(t) + y**2, -y*np.cos(t) + x]
+t0 = 0
+tf = 21
+s0 = np.array([1, -1])
+t_values = np.linspace(t0, tf, 1000)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+plt.figure(figsize=(8,6))
+plt.plot(edo_sol.t, edo_sol.y[0], label ="b(t)")
+plt.plot(edo_sol.t, edo_sol.y[1], label ="s(t)")
+plt.grid()
+plt.legend()
+plt.show()
+plt.clf()
+```
+
+
+# Ejercicio 29
+
+**Modelo epidemiológico SIR (en este caso no graficar la trayectoria)**
+
+$$
+\begin{cases}
+\frac{dS}{dt} = -\beta S I \\
+\frac{dI}{dt} = \beta S I - \gamma I \\
+\frac{dR}{dt} = \gamma I \\
+S(0) = 0.99,\quad I(0) = 0.01,\quad R(0) = 0,\quad \beta = 0.5,\ \gamma = 0.1
+\end{cases}
+$$
+
+```{python}
+#| code-fold: true
+
+def f(t, X, beta, gamma):
+  S, I, R = X
+  return[-beta*S*I, beta*S*I - gamma*I, gamma*I]
+
+t0 = 0
+tf = 100
+s0 = np.array([0.99, 0.01, 0])
+t_values = np.linspace(t0, tf, 100)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+plt.figure(figsize=(10,7))
+plt.plot(edo_sol.t, edo_sol.y[0], label ="b(t)")
+plt.plot(edo_sol.t, edo_sol.y[1], label ="s(t)")
+plt.grid()
+plt.legend()
+plt.show()
+plt.clf()
+```
+
+
+# Ejercicio 30
+
+**Crecimiento logístico cruzado**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = x(1 - x - 0.5y) \\
+\frac{dy}{dt} = y(1 - y - 0.3x) \\
+x(0) = 0.5,\quad y(0) = 0.2
+\end{cases}
+$$
+
+```{python}
+#| code-fold: true
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+
+def logistic_growth(t, variables, a1=0.5, a2=0.3):
+    x, y = variables
+    dxdt = x * (1 - x - a1 * y)
+    dydt = y * (1 - y - a2 * x)
+    return [dxdt, dydt]
+
+x0 = 0.5
+y0 = 0.2
+initial_conditions = [x0, y0]
+t_span = (0, 20)  
+t_eval = np.linspace(t_span[0], t_span[1], 1000)
+
+solution = solve_ivp(logistic_growth, t_span, initial_conditions, 
+                    t_eval=t_eval, method='RK45')
+
+x_sol = solution.y[0]
+y_sol = solution.y[1]
+t = solution.t
+
+plt.figure(figsize=(12, 6))
+plt.plot(t, x_sol, label='x(t) - Población 1', color='indigo')
+plt.plot(t, y_sol, label='y(t) - Población 2', color='pink')
+plt.title('Crecimiento Logístico Cruzado de Dos Poblaciones')
+plt.xlabel('Tiempo')
+plt.ylabel('Población (fracción de capacidad de carga)')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+plt.figure(figsize=(8, 8))
+plt.plot(x_sol, y_sol, label='Trayectoria', color='green')
+plt.scatter(x0, y0, color='red', label='Condición inicial')
+plt.title('Espacio de Fases del Sistema')
+plt.xlabel('Población x')
+plt.ylabel('Población y')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+print(f"Valores finales en t = {t_span[1]}:")
+print(f"x = {x_sol[-1]:.4f}")
+print(f"y = {y_sol[-1]:.4f}")
+```
+
+
+# Ejercicio 31
+
+**Movimiento en campo no lineal**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = y \\
+\frac{dy}{dt} = -\sin(x) - 0.5 y \\
+x(0) = \pi/2,\quad y(0) = 0
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+
+def f(t, X):
+  x, y = X
+  return[y, -np.sin(x) - 0.5*y]
+
+t0 = 0
+tf = 10
+s0 = np.array([np.pi/2, 0])
+
+t_values = np.linspace(t0, tf, 100)
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+plt.figure(figsize=(10,7))
+plt.plot(edo_sol.t, edo_sol.y[0], label ="b(t)")
+plt.plot(edo_sol.t, edo_sol.y[1], label ="s(t)")
+plt.grid()
+plt.legend()
+plt.show()
+plt.clf()
+```
+
+
+# Ejercicio 32
+
+**Sistema no lineal acoplado**
+
+$$
+\begin{cases}
+\frac{dx}{dt} = x(1 - x) - xy^2 \\
+\frac{dy}{dt} = y(1 - y) - x^2y \\
+x(0) = 0.8,\quad y(0) = 0.6
+\end{cases}
+$$
+
+```{python}
+#|code-fold: true
+
+def f(t, X):
+  x, y = X
+  return[x*(1 - x) - x*y**2, y*(1 - y) - x**2*y]
+
+t0 = 0
+tf = 10
+
+s0 = np.array([0.8, 0.6])
+t_values = np.linspace(t0, tf, 100)
+
+edo_sol= integrate.solve_ivp(f, [t0, tf], s0, t_eval = t_values)
+plt.figure(figsize=(10,7))
+plt.plot(edo_sol.t, edo_sol.y[0], label ="b(t)")
+plt.plot(edo_sol.t, edo_sol.y[1], label ="s(t)")
+plt.grid()
+plt.legend()
+plt.show()
+plt.clf()
+```
+
